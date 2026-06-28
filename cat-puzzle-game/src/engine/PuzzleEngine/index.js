@@ -1,0 +1,1 @@
+export { getPuzzleConfig } from "./difficulty";
