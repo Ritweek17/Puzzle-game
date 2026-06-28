@@ -7,10 +7,7 @@ import { getRegionColor } from "../../utils/regionColors";
 function Debug() {
   const [level, setLevel] = useState(1);
 
-  // Generate Puzzle
   const puzzle = generatePuzzle(level);
-
-  // Difficulty Info
   const config = getPuzzleConfig(level);
 
   return (
@@ -20,7 +17,7 @@ function Debug() {
         🛠 MeowMaze Engine Debug
       </h1>
 
-      <div className="grid lg:grid-cols-[350px_1fr] gap-10">
+      <div className="grid lg:grid-cols-[360px_1fr] gap-10">
 
         {/* LEFT PANEL */}
 
@@ -38,32 +35,30 @@ function Debug() {
             type="number"
             min="1"
             value={level}
-            onChange={(e) =>
-              setLevel(Number(e.target.value))
-            }
-            className="w-full rounded-xl border px-4 py-3 mb-6"
+            onChange={(e) => setLevel(Number(e.target.value))}
+            className="w-full border rounded-xl px-4 py-3 mb-6"
           />
 
           <div className="space-y-3">
 
             <p>
-              <strong>Difficulty :</strong>{" "}
-              {config.difficulty}
+              <strong>Difficulty:</strong> {config.difficulty}
             </p>
 
             <p>
-              <strong>Grid :</strong>{" "}
-              {config.gridSize} × {config.gridSize}
+              <strong>Grid:</strong> {config.gridSize} × {config.gridSize}
             </p>
 
             <p>
-              <strong>Regions :</strong>{" "}
-              {config.regionCount}
+              <strong>Regions:</strong> {config.regionCount}
             </p>
 
             <p>
-              <strong>Seed :</strong>{" "}
-              {puzzle.metadata.seed}
+              <strong>Seed:</strong> {puzzle.metadata.seed}
+            </p>
+
+            <p>
+              <strong>Cats:</strong> {puzzle.cats.length}
             </p>
 
           </div>
@@ -74,7 +69,7 @@ function Debug() {
             Puzzle Object
           </h3>
 
-          <pre className="bg-black text-green-400 rounded-xl p-4 text-xs overflow-auto max-h-[450px]">
+          <pre className="bg-black text-green-400 rounded-xl p-4 text-xs overflow-auto max-h-[420px]">
             {JSON.stringify(puzzle, null, 2)}
           </pre>
 
@@ -90,34 +85,53 @@ function Debug() {
               gridTemplateColumns: `repeat(${config.gridSize}, 60px)`,
             }}
           >
-            {puzzle.regions.flat().map((cell, index) => (
 
-              <div
-                key={index}
-                style={{
-                  backgroundColor: getRegionColor(cell),
-                }}
-                className="
-                  w-[60px]
-                  h-[60px]
-                  rounded-lg
-                  border-2
-                  border-white
-                  flex
-                  items-center
-                  justify-center
-                  font-bold
-                  text-white
-                  shadow
-                "
-              >
-                {cell}
-              </div>
+            {puzzle.regions.map((row, rowIndex) =>
 
-            ))}
+              row.map((cell, colIndex) => {
+
+                const hasCat = puzzle.cats.some(
+                  (cat) =>
+                    cat.row === rowIndex &&
+                    cat.col === colIndex
+                );
+
+                return (
+
+                  <div
+                    key={`${rowIndex}-${colIndex}`}
+                    style={{
+                      backgroundColor: getRegionColor(cell),
+                    }}
+                    className="
+                      w-[60px]
+                      h-[60px]
+                      rounded-lg
+                      border-2
+                      border-white
+                      shadow
+                      flex
+                      items-center
+                      justify-center
+                      text-white
+                      font-bold
+                      text-xl
+                    "
+                  >
+
+                    {hasCat ? "🐱" : cell}
+
+                  </div>
+
+                );
+
+              })
+
+            )}
+
           </div>
 
-          {/* Region Legend */}
+          {/* Legend */}
 
           <div className="mt-8">
 
@@ -145,7 +159,7 @@ function Debug() {
                     }}
                   />
 
-                  <span>{id}</span>
+                  <span>Region {id}</span>
 
                 </div>
 
