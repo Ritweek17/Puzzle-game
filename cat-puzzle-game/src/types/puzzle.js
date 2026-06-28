@@ -1,42 +1,37 @@
 /**
- * Puzzle Object Template
- * ----------------------
- * Every generated puzzle in MeowMaze
- * follows this structure.
+ * Creates an empty puzzle object.
  */
 
 export function createPuzzle({
   level,
   difficulty,
   gridSize,
-  regionCount,
 }) {
+
   return {
-    // Basic Information
+
     level,
+
     difficulty,
 
-    // Board
     gridSize,
-    regionCount,
 
-    // Generated Data
+    board: [],
+
     regions: [],
 
-    // Player State
     cats: [],
 
-    // Final Solution
     solution: [],
 
-    // Game Stats
-    moves: 0,
-    hintsUsed: 0,
-    mistakes: 0,
+    metadata: {
 
-    // Status
-    completed: false,
+      seed: null,
 
-    createdAt: Date.now(),
+      generatedAt: Date.now(),
+
+    }
+
   };
+
 }
