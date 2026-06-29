@@ -41,32 +41,37 @@ export function generatePuzzle(level) {
 
   const random = seededRandom(seed);
 
-  // Empty Board
-  const board = generateEmptyBoard(
-    config.gridSize
-  );
-
-  // Regions
-  const regions = generateRegions(
-    board,
-    config.regionCount,
-    random
-  );
-
-  // Retry until valid puzzle
+  // Retry whole puzzle generation
   for (
     let attempt = 1;
     attempt <= config.maxRetries;
     attempt++
   ) {
 
-    // Generate candidate cats
+    // Empty Board
+    const board = generateEmptyBoard(
+      config.gridSize
+    );
+
+    // Regions
+    const regions = generateRegions(
+      board,
+      config.regionCount,
+      random
+    );
+
+    // Generate Cats
     const cats = generateCats(
       regions,
       random
     );
 
-    // Create puzzle
+    // Backtracking failed
+    if (cats.length !== config.regionCount) {
+      continue;
+    }
+
+    // Create Puzzle
     const puzzle = createPuzzle({
 
       level,

@@ -53,7 +53,10 @@ function groupCellsByRegion(regions) {
 
   }
 
-  return [...map.values()];
+  // ⭐ Small regions first
+  return [...map.values()].sort(
+    (a, b) => a.length - b.length
+  );
 
 }
 
@@ -61,17 +64,16 @@ function canPlace(cats, row, col) {
 
   for (const cat of cats) {
 
-    if (cat.row === row)
-      return false;
+    if (cat.row === row) return false;
 
-    if (cat.col === col)
-      return false;
+    if (cat.col === col) return false;
 
     if (
       Math.abs(cat.row - row) <= 1 &&
       Math.abs(cat.col - col) <= 1
-    )
+    ) {
       return false;
+    }
 
   }
 
@@ -86,48 +88,41 @@ function solve(
   random
 ) {
 
-  if (
-    index >= regions.length
-  ) {
-
+  if (index >= regions.length) {
     return true;
-
   }
 
-  const cells =
-    shuffle(
-      regions[index],
-      random
-    );
+  const cells = shuffle(
+    regions[index],
+    random
+  );
 
   for (const cell of cells) {
 
     if (
-      canPlace(
+      !canPlace(
         cats,
         cell.row,
         cell.col
       )
     ) {
-
-      cats.push(cell);
-
-      if (
-        solve(
-          regions,
-          index + 1,
-          cats,
-          random
-        )
-      ) {
-
-        return true;
-
-      }
-
-      cats.pop();
-
+      continue;
     }
+
+    cats.push(cell);
+
+    if (
+      solve(
+        regions,
+        index + 1,
+        cats,
+        random
+      )
+    ) {
+      return true;
+    }
+
+    cats.pop();
 
   }
 
@@ -145,12 +140,18 @@ export function generateCats(
 
   const cats = [];
 
-  solve(
+  const solved = solve(
     grouped,
     0,
     cats,
     random
   );
+
+  if (!solved) {
+
+    return [];
+
+  }
 
   return cats;
 

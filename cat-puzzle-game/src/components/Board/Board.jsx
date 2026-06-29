@@ -3,10 +3,10 @@
  * File : Board.jsx
  *
  * Purpose :
- * Renders the entire game board.
+ * Renders complete puzzle board.
  *
  * Status :
- * Final v1.0
+ * Final v3
  * ----------------------------------------------------
  */
 
@@ -17,50 +17,62 @@ function Board({
   puzzle,
   playerBoard,
   onCellClick,
-  onCellDoubleClick,
 }) {
-  if (!puzzle || !playerBoard) return null;
 
-  // Responsive cell size
+  if (!puzzle || !playerBoard) {
+    return null;
+  }
+
+  /**
+   * Responsive Cell Size
+   */
+
   let cellSize = 64;
 
-  if (puzzle.gridSize >= 8) cellSize = 54;
-  if (puzzle.gridSize >= 10) cellSize = 46;
-  if (puzzle.gridSize >= 12) cellSize = 40;
-  if (puzzle.gridSize >= 15) cellSize = 34;
-  if (puzzle.gridSize >= 18) cellSize = 28;
-  if (puzzle.gridSize >= 20) cellSize = 24;
+  if (puzzle.gridSize >= 8) cellSize = 56;
+  if (puzzle.gridSize >= 10) cellSize = 48;
+  if (puzzle.gridSize >= 12) cellSize = 42;
+  if (puzzle.gridSize >= 15) cellSize = 36;
+  if (puzzle.gridSize >= 18) cellSize = 30;
+  if (puzzle.gridSize >= 20) cellSize = 26;
 
   return (
-    <div className="w-full overflow-auto flex justify-center">
+
+    <div className="w-full overflow-x-auto overflow-y-hidden py-2">
+      <div className="flex justify-center min-w-max">
 
       <div
-        className="grid gap-[2px] rounded-2xl bg-white p-2 shadow-xl"
+
+        className="grid gap-[2px] bg-white rounded-2xl shadow-xl p-2"
+
         style={{
+
           gridTemplateColumns: `repeat(${puzzle.gridSize}, ${cellSize}px)`,
+
         }}
+
       >
 
         {playerBoard.map((row, rowIndex) =>
+
           row.map((cell, colIndex) => (
 
             <Cell
+
               key={`${rowIndex}-${colIndex}`}
 
-              color={getRegionColor(
-                puzzle.regions[rowIndex][colIndex]
-              )}
+              color={
+                getRegionColor(
+                  puzzle.regions[rowIndex][colIndex]
+                )
+              }
 
               state={cell.state}
 
               locked={cell.locked}
 
               onClick={() =>
-                onCellClick(rowIndex, colIndex)
-              }
-
-              onDoubleClick={() =>
-                onCellDoubleClick(
+                onCellClick(
                   rowIndex,
                   colIndex
                 )
@@ -69,12 +81,16 @@ function Board({
             />
 
           ))
+
         )}
 
       </div>
+      </div>
 
     </div>
+
   );
+
 }
 
 export default Board;

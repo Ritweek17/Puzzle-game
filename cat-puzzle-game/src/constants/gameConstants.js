@@ -22,6 +22,7 @@ export const CELL_STATE = {
   EMPTY: "empty",
   CROSS: "cross",
   REVEALED: "revealed",
+  EXPLODED: "exploded",
 };
 
 /**

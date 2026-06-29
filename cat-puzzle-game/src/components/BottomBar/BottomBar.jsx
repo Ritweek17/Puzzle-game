@@ -3,18 +3,44 @@
  * File : BottomBar.jsx
  *
  * Purpose :
- * Game action buttons.
+ * Game Action Buttons
  *
  * Status :
- * Final v1.0
+ * Final v3
  * ----------------------------------------------------
  */
 
 function BottomBar({
+
   onHint,
+
   onUndo,
+
   onReset,
+
+  hints,
+
+  undos,
+
+  gameOver,
+
+  completed,
+
 }) {
+
+  /**
+   * Disable Buttons
+   */
+
+  const hintDisabled =
+    hints <= 0 ||
+    gameOver ||
+    completed;
+
+  const undoDisabled =
+    undos <= 0 ||
+    gameOver ||
+    completed;
 
   return (
 
@@ -31,49 +57,71 @@ function BottomBar({
       {/* Hint */}
 
       <button
+
         onClick={onHint}
-        className="
+
+        disabled={hintDisabled}
+
+        className={`
           px-6
           py-3
           rounded-xl
-          bg-yellow-400
-          hover:bg-yellow-500
-          text-white
           font-bold
           shadow-lg
           transition-all
           duration-200
-          active:scale-95
-        "
+
+          ${
+            hintDisabled
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-yellow-400 hover:bg-yellow-500 text-white active:scale-95"
+          }
+
+        `}
+
       >
-        💡 Hint
+
+        💡 Hint ({hints})
+
       </button>
 
       {/* Undo */}
 
       <button
+
         onClick={onUndo}
-        className="
+
+        disabled={undoDisabled}
+
+        className={`
           px-6
           py-3
           rounded-xl
-          bg-blue-500
-          hover:bg-blue-600
-          text-white
           font-bold
           shadow-lg
           transition-all
           duration-200
-          active:scale-95
-        "
+
+          ${
+            undoDisabled
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-blue-500 hover:bg-blue-600 text-white active:scale-95"
+          }
+
+        `}
+
       >
-        ↩ Undo
+
+        ↩ Undo ({undos})
+
       </button>
 
       {/* Reset */}
 
       <button
+
         onClick={onReset}
+
         className="
           px-6
           py-3
@@ -87,8 +135,11 @@ function BottomBar({
           duration-200
           active:scale-95
         "
+
       >
+
         🔄 Reset
+
       </button>
 
     </div>

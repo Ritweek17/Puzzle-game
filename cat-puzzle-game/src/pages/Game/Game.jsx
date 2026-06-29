@@ -3,69 +3,182 @@
  * File : Game.jsx
  *
  * Purpose :
- * Main gameplay screen.
+ * Main Gameplay Screen
  *
  * Status :
- * Final v1.0
+ * Final v6
+ * Part 1
  * ----------------------------------------------------
  */
 
-import { useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 
 import BackgroundDecoration from "../../components/BackgroundDecoration/BackgroundDecoration";
 import TopBar from "../../components/TopBar/TopBar";
 import BottomBar from "../../components/BottomBar/BottomBar";
 import Board from "../../components/Board/Board";
+import { playSound } from "../../utils/sound";
+import Confetti from "react-confetti";
+
 
 import useGame from "../../hooks/useGame";
 
+import { completeLevel } from "../../utils/progress";
+
 function Game() {
 
+  const navigate = useNavigate();
+
   const { id } = useParams();
+
+  const width = window.innerWidth;
+
+  const height = window.innerHeight;
 
   const level = Number(id) || 1;
 
   const {
 
-    puzzle,
+  puzzle,
 
-    playerBoard,
+  playerBoard,
 
-    lives,
+  lives,
 
-    hints,
+  hints,
 
-    foundCats,
+  undos,
 
-    totalCats,
+  foundCats,
 
-    completed,
+  wrongClicks,
 
-    gameOver,
+  totalCats,
 
-    handleCellClick,
+  completed,
 
-    handleCellDoubleClick,
+  gameOver,
 
-    resetGame,
+  handleCellClick,
 
-    undoLastMove,
+  resetGame,
 
-    useHint,
+  undoLastMove,
 
-  } = useGame(level);
+  useHint,
+
+} = useGame(level);
+  /**
+   * -----------------------------------
+   * Calculate Stars
+   * -----------------------------------
+   */
+
+  function calculateStars() {
+
+    if (wrongClicks <= 2) {
+
+      return 3;
+
+    }
+
+    if (wrongClicks <= 4) {
+
+      return 2;
+
+    }
+
+    return 1;
+
+  }
+
+  /**
+   * -----------------------------------
+   * Save Progress
+   * -----------------------------------
+   */
+
+ /**
+ * -----------------------------------
+ * Save Progress
+ * Play Win Sound
+ * -----------------------------------
+ */
+
+useEffect(() => {
+
+  if (!completed) return;
+
+  // 🔊 Play Win Sound
+
+  if (calculateStars() === 3) {
+
+    playSound("threeStar");
+
+  }
+
+  else {
+
+    playSound("levelComplete");
+
+  }
+
+  // 💾 Save Progress
+
+  completeLevel(
+
+    level,
+
+    calculateStars()
+
+  );
+
+}, [completed, level]);
+
+/**
+ * -----------------------------------
+ * Game Over Sound
+ * -----------------------------------
+ */
+
+useEffect(() => {
+
+  if (!gameOver) return;
+
+  playSound("gameOver");
+
+}, [gameOver]);
+
+  /**
+   * -----------------------------------
+   * Loading
+   * -----------------------------------
+   */
 
   if (!puzzle) {
 
     return (
 
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen flex items-center justify-center">
 
         Loading...
 
       </div>
 
     );
+
+  }
+
+  /**
+   * -----------------------------------
+   * Next Level
+   * -----------------------------------
+   */
+
+  function handleNextLevel() {
+
+    navigate(`/game/${level + 1}`);
 
   }
 
@@ -89,9 +202,13 @@ function Game() {
 
           totalCats={totalCats}
 
+          completed={completed}
+
+          gameOver={gameOver}
+
         />
 
-        <div className="flex justify-center mt-8">
+        <div className="mt-8 flex justify-center">
 
           <Board
 
@@ -101,77 +218,167 @@ function Game() {
 
             onCellClick={handleCellClick}
 
-            onCellDoubleClick={handleCellDoubleClick}
-
           />
 
         </div>
 
-        <BottomBar
+      <BottomBar
 
-          onHint={useHint}
+        onHint={useHint}
 
-          onUndo={undoLastMove}
+        onUndo={undoLastMove}
 
-          onReset={resetGame}
+        onReset={resetGame}
 
-        />
+        hints={hints}
 
-        {completed && (
+        undos={undos}
 
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+        gameOver={gameOver}
 
-            <div className="bg-white rounded-3xl p-8 shadow-2xl text-center">
+        completed={completed}
 
-              <h1 className="text-4xl font-bold text-green-600">
+      />
+      {/* 🎊 Confetti */}
 
-                🎉 Level Complete!
+    {completed && (
 
-              </h1>
+      <Confetti
+        width={width}
+        height={height}
+        recycle={false}
+        numberOfPieces={300}
+        gravity={0.18}
+      />
 
-              <p className="mt-4 text-gray-600">
+    )}
 
-                Great Job!
+      </div>
+      {/* -----------------------------------
+          WIN POPUP
+      ----------------------------------- */}
+
+      {completed && (
+
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+          <div className="bg-white rounded-3xl shadow-2xl p-8 w-[380px] text-center">
+
+            <h1 className="text-5xl mb-3">
+              🏆
+            </h1>
+
+            <h2 className="text-3xl font-bold text-green-600">
+
+              Level Complete!
+
+            </h2>
+
+            <div className="flex justify-center gap-1 text-4xl mt-6">
+
+              {Array.from({
+
+                length: calculateStars(),
+
+              }).map((_, index) => (
+
+                <span key={index}>
+                  ⭐
+                </span>
+
+              ))}
+
+            </div>
+
+            <div className="mt-6 space-y-2 text-lg">
+
+              <p>
+
+                Wrong Clicks :
+                <span className="font-bold">
+
+                  {" "}
+                  {wrongClicks}
+
+                </span>
+
+              </p>
+
+              <p>
+
+                Lives Left :
+                <span className="font-bold">
+
+                  {" "}
+                  {lives}
+
+                </span>
 
               </p>
 
             </div>
 
-          </div>
+            <button
 
-        )}
+              onClick={handleNextLevel}
 
-        {gameOver && (
+              className="mt-8 w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold transition"
 
-          <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+            >
 
-            <div className="bg-white rounded-3xl p-8 shadow-2xl text-center">
+              Next Level →
 
-              <h1 className="text-4xl font-bold text-red-600">
-
-                💀 Game Over
-
-              </h1>
-
-              <button
-
-                onClick={resetGame}
-
-                className="mt-6 bg-red-500 text-white px-6 py-3 rounded-xl hover:bg-red-600"
-
-              >
-
-                Play Again
-
-              </button>
-
-            </div>
+            </button>
 
           </div>
 
-        )}
+        </div>
 
-      </div>
+      )}
+
+      {/* -----------------------------------
+          GAME OVER
+      ----------------------------------- */}
+
+      {gameOver && (
+
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+
+          <div className="bg-white rounded-3xl shadow-2xl p-8 w-[380px] text-center">
+
+            <h1 className="text-5xl mb-3">
+              💀
+            </h1>
+
+            <h2 className="text-3xl font-bold text-red-600">
+
+              Game Over
+
+            </h2>
+
+            <p className="mt-5 text-gray-600">
+
+              Better luck next time!
+
+            </p>
+
+            <button
+
+              onClick={resetGame}
+
+              className="mt-8 w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold transition"
+
+            >
+
+              Play Again
+
+            </button>
+
+          </div>
+
+        </div>
+
+      )}
 
     </div>
 

@@ -3,3 +3,13 @@
 body{
 font-family:'Nunito',sans-serif;
 }
+
+/* Hide Scrollbar */
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
+}
