@@ -6,9 +6,11 @@
  * Renders a single board cell.
  *
  * Status :
- * Final v4
+ * Final v5
  * ----------------------------------------------------
  */
+
+import { motion } from "framer-motion";
 
 import { CELL_STATE } from "../../constants/gameConstants";
 
@@ -47,9 +49,31 @@ function Cell({
 
         return (
 
-          <img
+          <motion.img
+
             src={normalMascot}
+
             alt="Cat"
+
+            draggable={false}
+
+            initial={{
+              scale: 0,
+              rotate: -20,
+              opacity: 0,
+            }}
+
+            animate={{
+              scale: [0, 1.25, 0.95, 1],
+              rotate: [-20, 12, -8, 0],
+              opacity: 1,
+            }}
+
+            transition={{
+              duration: 0.45,
+              ease: "easeOut",
+            }}
+
             className="
               w-8
               h-8
@@ -57,7 +81,7 @@ function Cell({
               select-none
               pointer-events-none
             "
-            draggable={false}
+
           />
 
         );
@@ -66,11 +90,27 @@ function Cell({
 
         return (
 
-          <span className="text-2xl select-none">
+          <motion.span
+
+            initial={{
+              scale: 0,
+            }}
+
+            animate={{
+              scale: [0, 1.3, 1],
+            }}
+
+            transition={{
+              duration: 0.25,
+            }}
+
+            className="text-2xl select-none"
+
+          >
 
             💥
 
-          </span>
+          </motion.span>
 
         );
 
@@ -84,11 +124,23 @@ function Cell({
 
   return (
 
-    <button
+    <motion.button
 
       disabled={locked}
 
       onClick={onClick}
+
+      whileHover={{
+        scale: locked ? 1 : 1.05,
+      }}
+
+      whileTap={{
+        scale: locked ? 1 : 0.95,
+      }}
+
+      transition={{
+        duration: 0.15,
+      }}
 
       className="
         w-full
@@ -100,13 +152,8 @@ function Cell({
         flex
         items-center
         justify-center
-        transition-all
-        duration-200
-        hover:scale-105
-        active:scale-95
-        disabled:cursor-default
-        disabled:hover:scale-100
         overflow-hidden
+        disabled:cursor-default
       "
 
       style={{
@@ -117,7 +164,7 @@ function Cell({
 
       {renderContent()}
 
-    </button>
+    </motion.button>
 
   );
 

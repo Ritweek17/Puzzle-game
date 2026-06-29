@@ -96,6 +96,15 @@ export default function useGame(level = 1) {
 
 /**
  * -----------------------------------
+ * Board Shake
+ * -----------------------------------
+ */
+
+const [shakeBoard, setShakeBoard] =
+  useState(false);
+
+/**
+ * -----------------------------------
  * Move History
  * -----------------------------------
  */
@@ -151,6 +160,10 @@ const [history, setHistory] =
 
     setWrongClicks(0);
 
+    setShakeBoard(false);
+    
+    setHistory([]);
+    
     setCompleted(false);
 
     setGameOver(false);
@@ -182,6 +195,10 @@ const [history, setHistory] =
     setFoundCats(0);
 
     setWrongClicks(0);
+
+    setShakeBoard(false);
+
+    setHistory([]); 
 
     setCompleted(false);
 
@@ -385,7 +402,13 @@ function saveHistory() {
    * -----------------------------------
    */
 
- function handleCellClick(row, col) {
+/**
+ * -----------------------------------
+ * Single Click Gameplay
+ * -----------------------------------
+ */
+
+function handleCellClick(row, col) {
 
   if (completed || gameOver) return;
 
@@ -463,6 +486,15 @@ function saveHistory() {
         (prev) => prev + 1
 
       );
+
+      // 📳 Shake Board
+      setShakeBoard(true);
+
+      setTimeout(() => {
+
+        setShakeBoard(false);
+
+      }, 350);
 
       checkGameOver(nextLives);
 
@@ -632,6 +664,8 @@ function useHint() {
     /**
      * Actions
      */
+
+    shakeBoard,
 
     handleCellClick,
 

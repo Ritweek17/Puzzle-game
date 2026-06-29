@@ -20,6 +20,7 @@ import BottomBar from "../../components/BottomBar/BottomBar";
 import Board from "../../components/Board/Board";
 import { playSound } from "../../utils/sound";
 import Confetti from "react-confetti";
+import { motion } from "framer-motion"; 
 
 
 import useGame from "../../hooks/useGame";
@@ -38,7 +39,7 @@ function Game() {
 
   const level = Number(id) || 1;
 
-  const {
+const {
 
   puzzle,
 
@@ -59,6 +60,8 @@ function Game() {
   completed,
 
   gameOver,
+
+  shakeBoard,
 
   handleCellClick,
 
@@ -218,6 +221,8 @@ useEffect(() => {
 
             onCellClick={handleCellClick}
 
+            shake={shakeBoard}
+
           />
 
         </div>
@@ -274,21 +279,52 @@ useEffect(() => {
 
             </h2>
 
-            <div className="flex justify-center gap-1 text-4xl mt-6">
+            <div className="flex justify-center gap-2 text-5xl mt-6">
 
               {Array.from({
 
-                length: calculateStars(),
+              length: calculateStars(),
 
               }).map((_, index) => (
 
-                <span key={index}>
-                  ⭐
-                </span>
+            <motion.span
 
-              ))}
+            key={index}
 
-            </div>
+            initial={{
+            scale: 0,
+            rotate: -180,
+            opacity: 0,
+          }}
+
+      animate={{
+        scale: [0, 1.4, 1],
+        rotate: [-180, 20, -10, 0],
+        opacity: 1,
+      }}
+
+      transition={{
+        delay: index * 0.25,
+        duration: 0.5,
+        ease: "easeOut",
+      }}
+
+      whileHover={{
+        scale: 1.25,
+        rotate: 10,
+      }}
+
+      className="cursor-default"
+
+    >
+
+      ⭐
+
+    </motion.span>
+
+  ))}
+
+</div>
 
             <div className="mt-6 space-y-2 text-lg">
 

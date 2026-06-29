@@ -6,9 +6,11 @@
  * Renders complete puzzle board.
  *
  * Status :
- * Final v3
+ * Final v4
  * ----------------------------------------------------
  */
+
+import { motion } from "framer-motion";
 
 import Cell from "../Cell/Cell";
 import { getRegionColor } from "../../utils/regionColors";
@@ -17,6 +19,7 @@ function Board({
   puzzle,
   playerBoard,
   onCellClick,
+  shake,
 }) {
 
   if (!puzzle || !playerBoard) {
@@ -39,52 +42,66 @@ function Board({
   return (
 
     <div className="w-full overflow-x-auto overflow-y-hidden py-2">
+
       <div className="flex justify-center min-w-max">
 
-      <div
+        <motion.div
 
-        className="grid gap-[2px] bg-white rounded-2xl shadow-xl p-2"
+          animate={
+            shake
+              ? {
+                  x: [-12, 12, -10, 10, -6, 6, 0],
+                }
+              : {
+                  x: 0,
+                }
+          }
 
-        style={{
+          transition={{
+            duration: 0.35,
+          }}
 
-          gridTemplateColumns: `repeat(${puzzle.gridSize}, ${cellSize}px)`,
+          className="grid gap-[2px] bg-white rounded-2xl shadow-xl p-2"
 
-        }}
+          style={{
+            gridTemplateColumns: `repeat(${puzzle.gridSize}, ${cellSize}px)`,
+          }}
 
-      >
+        >
 
-        {playerBoard.map((row, rowIndex) =>
+          {playerBoard.map((row, rowIndex) =>
 
-          row.map((cell, colIndex) => (
+            row.map((cell, colIndex) => (
 
-            <Cell
+              <Cell
 
-              key={`${rowIndex}-${colIndex}`}
+                key={`${rowIndex}-${colIndex}`}
 
-              color={
-                getRegionColor(
-                  puzzle.regions[rowIndex][colIndex]
-                )
-              }
+                color={
+                  getRegionColor(
+                    puzzle.regions[rowIndex][colIndex]
+                  )
+                }
 
-              state={cell.state}
+                state={cell.state}
 
-              locked={cell.locked}
+                locked={cell.locked}
 
-              onClick={() =>
-                onCellClick(
-                  rowIndex,
-                  colIndex
-                )
-              }
+                onClick={() =>
+                  onCellClick(
+                    rowIndex,
+                    colIndex
+                  )
+                }
 
-            />
+              />
 
-          ))
+            ))
 
-        )}
+          )}
 
-      </div>
+        </motion.div>
+
       </div>
 
     </div>

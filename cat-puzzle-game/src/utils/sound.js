@@ -6,7 +6,7 @@
  * Play Sound Effects
  *
  * Status :
- * Final v1
+ * Final v2
  * ----------------------------------------------------
  */
 
@@ -19,6 +19,14 @@ import levelCompleteSound from "../assets/sounds/LevelComplete.mp3";
 import gameOverSound from "../assets/sounds/GameOver.mp3";
 import levelUnlockSound from "../assets/sounds/LevelUnlock.mp3";
 import threeStarSound from "../assets/sounds/threestar.mp3";
+
+import { getSettings } from "./settings";
+
+/**
+ * -----------------------------------
+ * All Sounds
+ * -----------------------------------
+ */
 
 const sounds = {
 
@@ -42,20 +50,59 @@ const sounds = {
 
 };
 
+/**
+ * -----------------------------------
+ * Preload
+ * -----------------------------------
+ */
+
 Object.values(sounds).forEach((sound) => {
 
   sound.preload = "auto";
 
+  sound.volume = 1;
+
 });
 
+/**
+ * -----------------------------------
+ * Play Sound
+ * -----------------------------------
+ */
+
 export function playSound(name) {
+
+  const settings = getSettings();
+
+  // Sound Disabled
+  if (!settings.sound) return;
 
   const sound = sounds[name];
 
   if (!sound) return;
 
+  sound.pause();
+
   sound.currentTime = 0;
 
   sound.play().catch(() => {});
+
+}
+
+/**
+ * -----------------------------------
+ * Stop All Sounds
+ * -----------------------------------
+ */
+
+export function stopAllSounds() {
+
+  Object.values(sounds).forEach((sound) => {
+
+    sound.pause();
+
+    sound.currentTime = 0;
+
+  });
 
 }

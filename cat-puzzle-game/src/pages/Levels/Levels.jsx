@@ -24,6 +24,7 @@ import BackgroundDecoration from "../../components/BackgroundDecoration/Backgrou
 import levels from "../../data/levels";
 
 import happyCat from "../../assets/mascot/happy.png";
+import { Settings } from "lucide-react";
 
 import {
   isLocked,
@@ -94,13 +95,40 @@ function Levels() {
 
       <div className="relative z-10 max-w-6xl mx-auto">
 
-        <TopBar
+       <div className="flex justify-between items-center">
 
-          title="Level Select"
+  <TopBar
+    title="Level Select"
+    rightIcon={<Trophy size={20} />}
+  />
 
-          rightIcon={<Trophy size={22} />}
+  <button
 
-        />
+    onClick={() => navigate("/settings")}
+
+    className="
+      ml-4
+      w-12
+      h-12
+      rounded-full
+      bg-white
+      shadow-lg
+      flex
+      items-center
+      justify-center
+      hover:rotate-90
+      hover:scale-110
+      transition-all
+      duration-300
+    "
+
+  >
+
+    <Settings size={24} />
+
+  </button>
+
+</div>
 
         {/* Hero */}
 
