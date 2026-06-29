@@ -1,75 +1,102 @@
-import { ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+/**
+ * ----------------------------------------------------
+ * File : TopBar.jsx
+ *
+ * Purpose :
+ * Displays game information.
+ *
+ * Status :
+ * Final v1.0
+ * ----------------------------------------------------
+ */
 
 function TopBar({
-  title,
-  showBack = true,
-  rightIcon = null,
-  onRightClick = () => {},
+  level,
+  lives,
+  hints,
+  foundCats,
+  totalCats,
 }) {
-  const navigate = useNavigate();
 
   return (
-    <header className="flex items-center justify-between mb-8">
-      {/* Left */}
-      <div className="w-12">
-        {showBack && (
-          <button
-            onClick={() => navigate(-1)}
-            className="
-              w-12 h-12
-              flex items-center justify-center
-              rounded-full
-              bg-white/70
-              backdrop-blur-lg
-              border border-white/60
-              shadow-lg
-              transition-all
-              duration-300
-              hover:scale-105
-              hover:shadow-xl
-              active:scale-95
-            "
-          >
-            <ArrowLeft
-              size={22}
-              className="text-[#2E2E3A]"
-            />
-          </button>
-        )}
+
+    <div
+      className="
+        bg-white/90
+        backdrop-blur-md
+        rounded-2xl
+        shadow-xl
+        p-4
+        flex
+        flex-wrap
+        items-center
+        justify-between
+        gap-4
+      "
+    >
+
+      {/* Level */}
+
+      <div className="flex flex-col">
+
+        <span className="text-xs text-gray-500">
+          LEVEL
+        </span>
+
+        <span className="text-2xl font-bold">
+          {level}
+        </span>
+
       </div>
 
-      {/* Title */}
-      <h1 className="flex-1 text-center text-3xl font-bold text-[#2E2E3A]">
-        {title}
-      </h1>
+      {/* Lives */}
 
-      {/* Right */}
-      <div className="w-12 flex justify-end">
-        {rightIcon && (
-          <button
-            onClick={onRightClick}
-            className="
-              w-12 h-12
-              flex items-center justify-center
-              rounded-full
-              bg-white/70
-              backdrop-blur-lg
-              border border-white/60
-              shadow-lg
-              transition-all
-              duration-300
-              hover:scale-105
-              hover:shadow-xl
-              active:scale-95
-            "
-          >
-            {rightIcon}
-          </button>
-        )}
+      <div className="flex flex-col items-center">
+
+        <span className="text-xs text-gray-500">
+          LIVES
+        </span>
+
+        <span className="text-2xl">
+          {Array.from({ length: lives }).map((_, index) => (
+            <span key={index}>❤️</span>
+          ))}
+        </span>
+
       </div>
-    </header>
+
+      {/* Found Cats */}
+
+      <div className="flex flex-col items-center">
+
+        <span className="text-xs text-gray-500">
+          FOUND
+        </span>
+
+        <span className="text-xl font-bold">
+          🐱 {foundCats}/{totalCats}
+        </span>
+
+      </div>
+
+      {/* Hints */}
+
+      <div className="flex flex-col items-center">
+
+        <span className="text-xs text-gray-500">
+          HINTS
+        </span>
+
+        <span className="text-xl font-bold">
+          💡 {hints}
+        </span>
+
+      </div>
+
+    </div>
+
   );
+
 }
 
 export default TopBar;

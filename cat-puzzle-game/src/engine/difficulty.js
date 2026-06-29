@@ -1,223 +1,61 @@
 /**
- * Difficulty Manager
- * ------------------
- * Decides puzzle configuration based on current level.
+ * ----------------------------------------
+ * File: difficulty.js
+ *
+ * Purpose:
+ * Returns puzzle configuration
+ * based on current level.
+ * ----------------------------------------
  */
 
 const LEVEL_RANGES = [
-  {
-    minLevel: 1,
-    maxLevel: 20,
-
-    name: "Beginner",
-
-    gridSize: 4,
-
-    minRegions: 5,
-    maxRegions: 6,
-
-    hints: true,
-    timer: false,
-  },
-
-  {
-    minLevel: 21,
-    maxLevel: 50,
-
-    name: "Easy",
-
-    gridSize: 5,
-
-    minRegions: 7,
-    maxRegions: 9,
-
-    hints: true,
-    timer: false,
-  },
-
-  {
-    minLevel: 51,
-    maxLevel: 100,
-
-    name: "Easy+",
-
-    gridSize: 6,
-
-    minRegions: 10,
-    maxRegions: 12,
-
-    hints: true,
-    timer: false,
-  },
-
-  {
-    minLevel: 101,
-    maxLevel: 180,
-
-    name: "Normal",
-
-    gridSize: 7,
-
-    minRegions: 13,
-    maxRegions: 16,
-
-    hints: true,
-    timer: false,
-  },
-
-  {
-    minLevel: 181,
-    maxLevel: 280,
-
-    name: "Medium",
-
-    gridSize: 8,
-
-    minRegions: 17,
-    maxRegions: 20,
-
-    hints: false,
-    timer: false,
-  },
-
-  {
-    minLevel: 281,
-    maxLevel: 400,
-
-    name: "Medium+",
-
-    gridSize: 9,
-
-    minRegions: 21,
-    maxRegions: 25,
-
-    hints: false,
-    timer: false,
-  },
-
-  {
-    minLevel: 401,
-    maxLevel: 550,
-
-    name: "Hard",
-
-    gridSize: 10,
-
-    minRegions: 26,
-    maxRegions: 30,
-
-    hints: false,
-    timer: true,
-  },
-
-  {
-    minLevel: 551,
-    maxLevel: 750,
-
-    name: "Hard+",
-
-    gridSize: 11,
-
-    minRegions: 31,
-    maxRegions: 36,
-
-    hints: false,
-    timer: true,
-  },
-
-  {
-    minLevel: 751,
-    maxLevel: 1000,
-
-    name: "Expert",
-
-    gridSize: 12,
-
-    minRegions: 37,
-    maxRegions: 44,
-
-    hints: false,
-    timer: true,
-  },
-
-  {
-    minLevel: 1001,
-    maxLevel: 1300,
-
-    name: "Master",
-
-    gridSize: 13,
-
-    minRegions: 45,
-    maxRegions: 53,
-
-    hints: false,
-    timer: true,
-  },
-
-  {
-    minLevel: 1301,
-    maxLevel: 1700,
-
-    name: "Grandmaster",
-
-    gridSize: 14,
-
-    minRegions: 54,
-    maxRegions: 63,
-
-    hints: false,
-    timer: true,
-  },
-
-  {
-    minLevel: 1701,
-    maxLevel: Infinity,
-
-    name: "Infinite",
-
-    gridSize: 15,
-
-    minRegions: 64,
-    maxRegions: 75,
-
-    hints: false,
-    timer: true,
-  },
+  { min: 1, max: 20, difficulty: "Beginner", grid: 4 },
+  { min: 21, max: 40, difficulty: "Easy", grid: 5 },
+  { min: 41, max: 60, difficulty: "Easy+", grid: 6 },
+  { min: 61, max: 80, difficulty: "Normal", grid: 7 },
+  { min: 81, max: 100, difficulty: "Medium", grid: 8 },
+  { min: 101, max: 120, difficulty: "Medium+", grid: 9 },
+  { min: 121, max: 140, difficulty: "Hard", grid: 10 },
+  { min: 141, max: 170, difficulty: "Hard+", grid: 11 },
+  { min: 171, max: 200, difficulty: "Expert", grid: 12 },
+  { min: 201, max: 230, difficulty: "Master", grid: 13 },
+  { min: 231, max: 260, difficulty: "Grandmaster", grid: 14 },
+  { min: 261, max: 290, difficulty: "Legend", grid: 15 },
+  { min: 291, max: 320, difficulty: "Mythic", grid: 16 },
+  { min: 321, max: 360, difficulty: "Immortal", grid: 17 },
+  { min: 361, max: 400, difficulty: "Infinite", grid: 18 },
+  { min: 401, max: Infinity, difficulty: "God Mode", grid: 20 },
 ];
 
 export function getPuzzleConfig(level) {
   if (typeof level !== "number" || level < 1) {
-    throw new Error("Invalid level number.");
+    throw new Error("Invalid level.");
   }
 
   const config = LEVEL_RANGES.find(
     (range) =>
-      level >= range.minLevel &&
-      level <= range.maxLevel
+      level >= range.min &&
+      level <= range.max
   );
 
   if (!config) {
     throw new Error("No configuration found.");
   }
 
-  const regionCount =
-    Math.floor(
-      Math.random() *
-        (config.maxRegions - config.minRegions + 1)
-    ) + config.minRegions;
-
   return {
     level,
 
-    difficulty: config.name,
+    difficulty: config.difficulty,
 
-    gridSize: config.gridSize,
+    gridSize: config.grid,
 
-    regionCount,
+    // One region per row/column
+    regionCount: config.grid,
 
-    hints: config.hints,
+    hints: config.grid <= 7,
 
-    timer: config.timer,
+    timer: config.grid >= 10,
+
+    maxRetries: config.grid <= 8 ? 500 : 5000,
   };
 }

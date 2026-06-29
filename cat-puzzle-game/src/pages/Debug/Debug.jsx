@@ -3,12 +3,14 @@ import { useState } from "react";
 import { generatePuzzle } from "../../engine/generator";
 import { getPuzzleConfig } from "../../engine/difficulty";
 import { getRegionColor } from "../../utils/regionColors";
+import { validatePuzzle } from "../../engine/validator";
 
 function Debug() {
   const [level, setLevel] = useState(1);
 
   const puzzle = generatePuzzle(level);
   const config = getPuzzleConfig(level);
+  const validation = validatePuzzle(puzzle);
 
   return (
     <div className="min-h-screen bg-slate-100 p-8">
@@ -54,16 +56,59 @@ function Debug() {
             </p>
 
             <p>
-              <strong>Seed:</strong> {puzzle.metadata.seed}
-            </p>
+  <strong>Seed:</strong> {puzzle.metadata.seed}
+</p>
 
-            <p>
-              <strong>Cats:</strong> {puzzle.cats.length}
-            </p>
+<p>
+  <strong>Attempts:</strong>{" "}
+  {puzzle.metadata.attempts}
+</p>
+
+<p>
+  <strong>Cats:</strong> {puzzle.cats.length}
+</p>
 
           </div>
 
           <hr className="my-6" />
+          <h3 className="text-xl font-bold mb-3">
+  Validation
+</h3>
+
+<div className="space-y-2">
+
+  <p>
+    <strong>Status:</strong>{" "}
+    {validation.valid ? (
+      <span className="text-green-600 font-bold">
+        ✅ Valid
+      </span>
+    ) : (
+      <span className="text-red-600 font-bold">
+        ❌ Invalid
+      </span>
+    )}
+  </p>
+
+  {!validation.valid && (
+    <div className="bg-red-50 rounded-xl p-3">
+
+      <p className="font-semibold mb-2">
+        Errors:
+      </p>
+
+      <ul className="list-disc pl-5 text-red-600">
+
+        {validation.errors.map((error, index) => (
+          <li key={index}>{error}</li>
+        ))}
+
+      </ul>
+
+    </div>
+  )}
+
+</div>
 
           <h3 className="text-xl font-bold mb-3">
             Puzzle Object

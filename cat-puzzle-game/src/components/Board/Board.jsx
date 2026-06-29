@@ -1,21 +1,78 @@
+/**
+ * ----------------------------------------------------
+ * File : Board.jsx
+ *
+ * Purpose :
+ * Renders the entire game board.
+ *
+ * Status :
+ * Final v1.0
+ * ----------------------------------------------------
+ */
+
 import Cell from "../Cell/Cell";
+import { getRegionColor } from "../../utils/regionColors";
 
-const board = [
-  ["#FFD6E7", "#FFD6E7", "#BDE7FF", "#BDE7FF"],
-  ["#FFD6E7", "#CFFFD2", "#CFFFD2", "#BDE7FF"],
-  ["#FFEAA7", "#FFEAA7", "#CFFFD2", "#F6C6FF"],
-  ["#FFEAA7", "#F6C6FF", "#F6C6FF", "#F6C6FF"],
-];
+function Board({
+  puzzle,
+  playerBoard,
+  onCellClick,
+  onCellDoubleClick,
+}) {
+  if (!puzzle || !playerBoard) return null;
 
-function Board() {
+  // Responsive cell size
+  let cellSize = 64;
+
+  if (puzzle.gridSize >= 8) cellSize = 54;
+  if (puzzle.gridSize >= 10) cellSize = 46;
+  if (puzzle.gridSize >= 12) cellSize = 40;
+  if (puzzle.gridSize >= 15) cellSize = 34;
+  if (puzzle.gridSize >= 18) cellSize = 28;
+  if (puzzle.gridSize >= 20) cellSize = 24;
+
   return (
-    <div className="grid grid-cols-4 gap-2">
-      {board.flat().map((color, index) => (
-        <Cell
-          key={index}
-          color={color}
-        />
-      ))}
+    <div className="w-full overflow-auto flex justify-center">
+
+      <div
+        className="grid gap-[2px] rounded-2xl bg-white p-2 shadow-xl"
+        style={{
+          gridTemplateColumns: `repeat(${puzzle.gridSize}, ${cellSize}px)`,
+        }}
+      >
+
+        {playerBoard.map((row, rowIndex) =>
+          row.map((cell, colIndex) => (
+
+            <Cell
+              key={`${rowIndex}-${colIndex}`}
+
+              color={getRegionColor(
+                puzzle.regions[rowIndex][colIndex]
+              )}
+
+              state={cell.state}
+
+              locked={cell.locked}
+
+              onClick={() =>
+                onCellClick(rowIndex, colIndex)
+              }
+
+              onDoubleClick={() =>
+                onCellDoubleClick(
+                  rowIndex,
+                  colIndex
+                )
+              }
+
+            />
+
+          ))
+        )}
+
+      </div>
+
     </div>
   );
 }

@@ -1,129 +1,156 @@
 /**
- * Shuffle array using seeded random
+ * ----------------------------------------
+ * File: catGenerator.js
+ *
+ * Smart Cat Generator
+ * Uses recursive backtracking.
+ * ----------------------------------------
  */
-function shuffleArray(array, random) {
+
+function shuffle(array, random) {
+
   const copy = [...array];
 
   for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
 
-    [copy[i], copy[j]] = [copy[j], copy[i]];
+    const j = Math.floor(
+      random() * (i + 1)
+    );
+
+    [copy[i], copy[j]] =
+      [copy[j], copy[i]];
+
   }
 
   return copy;
+
 }
 
-/**
- * Group all cells by region
- */
 function groupCellsByRegion(regions) {
-  const regionMap = new Map();
+
+  const map = new Map();
 
   const size = regions.length;
 
   for (let row = 0; row < size; row++) {
-    for (let col = 0; col < size; col++) {
-      const regionId = regions[row][col];
 
-      if (!regionMap.has(regionId)) {
-        regionMap.set(regionId, []);
+    for (let col = 0; col < size; col++) {
+
+      const id = regions[row][col];
+
+      if (!map.has(id)) {
+
+        map.set(id, []);
+
       }
 
-      regionMap.get(regionId).push({
+      map.get(id).push({
         row,
         col,
       });
+
     }
+
   }
 
-  return regionMap;
+  return [...map.values()];
+
 }
 
-/**
- * Check whether a cat can be placed
- */
-function canPlaceCat(cats, row, col) {
+function canPlace(cats, row, col) {
+
   for (const cat of cats) {
 
-    // Same Row
-    if (cat.row === row) {
+    if (cat.row === row)
       return false;
-    }
 
-    // Same Column
-    if (cat.col === col) {
+    if (cat.col === col)
       return false;
-    }
 
-    // Adjacent (8 directions)
     if (
       Math.abs(cat.row - row) <= 1 &&
       Math.abs(cat.col - col) <= 1
-    ) {
+    )
       return false;
-    }
+
   }
 
   return true;
+
 }
 
-/**
- * Generate candidate cat positions
- *
- * One cat per region.
- * Other constraints are attempted but not guaranteed.
- */
-export function generateCats(regions, random) {
+function solve(
+  regions,
+  index,
+  cats,
+  random
+) {
 
-  const regionMap = groupCellsByRegion(regions);
+  if (
+    index >= regions.length
+  ) {
 
-  const cats = [];
+    return true;
 
-  for (const [, cells] of regionMap) {
+  }
 
-    const shuffledCells = shuffleArray(
-      cells,
+  const cells =
+    shuffle(
+      regions[index],
       random
     );
 
-    let placed = false;
+  for (const cell of cells) {
 
-    for (const cell of shuffledCells) {
+    if (
+      canPlace(
+        cats,
+        cell.row,
+        cell.col
+      )
+    ) {
+
+      cats.push(cell);
 
       if (
-        canPlaceCat(
+        solve(
+          regions,
+          index + 1,
           cats,
-          cell.row,
-          cell.col
+          random
         )
       ) {
 
-        cats.push(cell);
-
-        placed = true;
-
-        break;
+        return true;
 
       }
 
-    }
-
-    /**
-     * Fallback
-     *
-     * If no valid position exists,
-     * choose first random cell.
-     *
-     * Validator will reject it later.
-     */
-
-    if (!placed) {
-
-      cats.push(shuffledCells[0]);
+      cats.pop();
 
     }
 
   }
+
+  return false;
+
+}
+
+export function generateCats(
+  regions,
+  random
+) {
+
+  const grouped =
+    groupCellsByRegion(regions);
+
+  const cats = [];
+
+  solve(
+    grouped,
+    0,
+    cats,
+    random
+  );
 
   return cats;
 

@@ -1,5 +1,11 @@
 /**
- * Grow every region until its target size.
+ * ----------------------------------------
+ * File: growRegions.js
+ *
+ * Purpose:
+ * Grow each region until target size
+ * using frontier expansion.
+ * ----------------------------------------
  */
 
 const DIRECTIONS = [
@@ -9,72 +15,125 @@ const DIRECTIONS = [
   [0, 1],
 ];
 
-export function growRegions(regions, seeds, targets, random) {
-  const size = regions.length;
+function shuffle(array, random) {
+  const copy = [...array];
 
-  // Current size of each region
-  const regionSizes = new Map();
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
 
-  for (const seed of seeds) {
-    regionSizes.set(seed.id, 1);
+    [copy[i], copy[j]] = [copy[j], copy[i]];
   }
 
-  // BFS queue
-  const queue = [...seeds];
+  return copy;
+}
 
-  while (queue.length > 0) {
-    const current = queue.shift();
+export function growRegions(
+  regions,
+  seeds,
+  targets,
+  random
+) {
 
-    const currentSize = regionSizes.get(current.id);
+  const size = regions.length;
 
-    // Stop growing if target reached
-    if (currentSize >= targets[current.id - 1]) {
-      continue;
-    }
+  const regionSizes = new Map();
 
-    // Shuffle directions
-    const shuffled = [...DIRECTIONS].sort(() => random() - 0.5);
+  const frontiers = new Map();
 
-    for (const [dr, dc] of shuffled) {
-      const nr = current.row + dr;
-      const nc = current.col + dc;
+  for (const seed of seeds) {
+
+    regionSizes.set(seed.id, 1);
+
+    frontiers.set(seed.id, [seed]);
+
+  }
+
+  let growing = true;
+
+  while (growing) {
+
+    growing = false;
+
+    for (const seed of seeds) {
+
+      const id = seed.id;
 
       if (
-        nr < 0 ||
-        nr >= size ||
-        nc < 0 ||
-        nc >= size
+        regionSizes.get(id) >=
+        targets[id - 1]
       ) {
         continue;
       }
 
-      if (regions[nr][nc] !== -1) {
+      const frontier =
+        frontiers.get(id);
+
+      if (
+        frontier.length === 0
+      ) {
         continue;
       }
 
-      // Fill cell
-      regions[nr][nc] = current.id;
+      growing = true;
 
-      regionSizes.set(
-        current.id,
-        regionSizes.get(current.id) + 1
-      );
+      const current =
+        frontier.shift();
 
-      queue.push({
-        id: current.id,
-        row: nr,
-        col: nc,
-      });
+      const dirs =
+        shuffle(
+          DIRECTIONS,
+          random
+        );
 
-      // Target reached
-      if (
-        regionSizes.get(current.id) >=
-        targets[current.id - 1]
-      ) {
-        break;
+      for (const [dr, dc] of dirs) {
+
+        const nr =
+          current.row + dr;
+
+        const nc =
+          current.col + dc;
+
+        if (
+          nr < 0 ||
+          nr >= size ||
+          nc < 0 ||
+          nc >= size
+        ) {
+          continue;
+        }
+
+        if (
+          regions[nr][nc] !== -1
+        ) {
+          continue;
+        }
+
+        regions[nr][nc] = id;
+
+        regionSizes.set(
+          id,
+          regionSizes.get(id) + 1
+        );
+
+        frontier.push({
+          row: nr,
+          col: nc,
+          id,
+        });
+
+        if (
+          regionSizes.get(id) >=
+          targets[id - 1]
+        ) {
+          break;
+        }
+
       }
+
     }
+
   }
 
   return regions;
+
 }

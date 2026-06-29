@@ -1,3 +1,12 @@
+/**
+ * ----------------------------------------
+ * File: validator.js
+ *
+ * Purpose:
+ * Validate an entire puzzle.
+ * ----------------------------------------
+ */
+
 import {
   oneCatPerRegion,
   oneCatPerRow,
@@ -5,17 +14,8 @@ import {
   noAdjacentCats,
 } from "./rules";
 
-/**
- * Validate entire puzzle.
- *
- * @param {Object} puzzle
- * @returns {{
- *   valid: boolean,
- *   errors: string[]
- * }}
- */
-
 export function validatePuzzle(puzzle) {
+
   const errors = [];
 
   if (!oneCatPerRegion(puzzle)) {
@@ -38,4 +38,5 @@ export function validatePuzzle(puzzle) {
     valid: errors.length === 0,
     errors,
   };
+
 }

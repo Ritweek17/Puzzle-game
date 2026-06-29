@@ -1,10 +1,20 @@
 /**
- * Rule:
- * Every row must contain exactly one cat.
+ * Exactly one cat per row.
  */
 
 export function oneCatPerRow(puzzle) {
 
-    return true;
+  const rows =
+    new Array(puzzle.gridSize).fill(0);
+
+  for (const cat of puzzle.cats) {
+
+    rows[cat.row]++;
+
+  }
+
+  return rows.every(
+    row => row === 1
+  );
 
 }
