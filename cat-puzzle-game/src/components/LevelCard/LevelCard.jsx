@@ -3,14 +3,14 @@
  * File : LevelCard.jsx
  *
  * Purpose :
- * Single Level Card
+ * Premium Level Card
  *
  * Status :
- * Final v1
+ * Final v2
  * ----------------------------------------------------
  */
 
-import { Lock } from "lucide-react";
+import { Lock, Play, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 function LevelCard({
@@ -23,6 +23,8 @@ function LevelCard({
 
   locked,
 
+  current = false,
+
   onClick,
 
 }) {
@@ -34,8 +36,8 @@ function LevelCard({
       whileHover={
         !locked
           ? {
-              scale: 1.05,
-              y: -5,
+              scale: 1.06,
+              y: -8,
             }
           : {}
       }
@@ -56,19 +58,47 @@ function LevelCard({
         relative
         h-44
         rounded-3xl
-        backdrop-blur-xl
-        shadow-xl
+        overflow-hidden
         transition-all
         duration-300
-        overflow-hidden
+        border-2
 
         ${
-          locked
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-white/80 hover:shadow-2xl"
+          current
+            ? "border-[#7C5CFF] shadow-[0_0_25px_rgba(124,92,255,0.45)] bg-gradient-to-br from-white to-purple-50"
+            : locked
+            ? "border-gray-200 bg-gray-100 text-gray-400"
+            : completed
+            ? "border-green-300 bg-gradient-to-br from-green-50 to-white shadow-xl"
+            : "border-white bg-white shadow-xl hover:shadow-2xl"
         }
       `}
     >
+
+      {/* Current Badge */}
+
+      {current && (
+
+        <div
+          className="
+            absolute
+            top-3
+            right-3
+            px-2
+            py-1
+            rounded-full
+            bg-[#7C5CFF]
+            text-white
+            text-[10px]
+            font-bold
+          "
+        >
+
+          CURRENT
+
+        </div>
+
+      )}
 
       {/* Stars */}
 
@@ -80,12 +110,17 @@ function LevelCard({
 
             key={star}
 
-            className={`text-xl
+            className={`
+              text-xl
+              transition-all
 
               ${
                 stars >= star
-                  ? "opacity-100"
-                  : "opacity-20"
+
+                  ? "opacity-100 scale-100"
+
+                  : "opacity-20 scale-90"
+
               }
 
             `}
@@ -100,28 +135,73 @@ function LevelCard({
 
       </div>
 
-      {/* Content */}
+      {/* Body */}
 
-      <div className="flex flex-col items-center justify-center h-full">
+      <div className="h-full flex flex-col items-center justify-center">
 
         {locked ? (
 
           <Lock
-            size={34}
+
+            size={38}
+
             className="mb-3"
+
+          />
+
+        ) : completed ? (
+
+          <CheckCircle2
+
+            size={38}
+
+            className="mb-3 text-green-500"
+
           />
 
         ) : (
 
-          <div className="text-5xl font-bold">
+          <Play
 
-            {level}
+            fill="#7C5CFF"
 
-          </div>
+            className="mb-3 text-[#7C5CFF]"
+
+            size={34}
+
+          />
 
         )}
 
-        <div className="mt-4 text-sm">
+        <div className="text-4xl font-extrabold">
+
+          {level}
+
+        </div>
+
+        <div
+
+          className={`
+            mt-4
+            text-sm
+            font-semibold
+
+            ${
+              locked
+
+                ? "text-gray-400"
+
+                : completed
+
+                ? "text-green-600"
+
+                : "text-[#7C5CFF]"
+
+            }
+
+          `}
+
+        >
 
           {locked
             ? "Locked"

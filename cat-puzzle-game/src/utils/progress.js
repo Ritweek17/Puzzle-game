@@ -6,7 +6,7 @@
  * Save / Load Player Progress
  *
  * Status :
- * Final v4
+ * Final v5
  * ----------------------------------------------------
  */
 
@@ -22,9 +22,13 @@ function createDefaultProgress() {
 
   return {
 
+    currentLevel: 1,
+
+    unlockedLevel: 1,
+
     completedLevels: {},
 
-    unlockedLevels: [1],
+    stars: {},
 
   };
 
@@ -52,11 +56,17 @@ export function getProgress() {
 
     return {
 
+      currentLevel:
+        progress.currentLevel || 1,
+
+      unlockedLevel:
+        progress.unlockedLevel || 1,
+
       completedLevels:
         progress.completedLevels || {},
 
-      unlockedLevels:
-        progress.unlockedLevels || [1],
+      stars:
+        progress.stars || {},
 
     };
 
@@ -98,45 +108,33 @@ export function completeLevel(level, stars) {
 
   const progress = getProgress();
 
-  const previousStars =
-    progress.completedLevels[level];
+  // Save completion
 
-  /**
-   * Save Best Stars Only
-   */
+  progress.completedLevels[level] = true;
 
-  if (
+  // Save best stars
 
-    previousStars === undefined ||
+  progress.stars[level] = Math.max(
 
-    stars > previousStars
+    progress.stars[level] || 0,
 
-  ) {
+    stars
 
-    progress.completedLevels[level] =
-      stars;
+  );
 
-  }
+  // Current Level
 
-  /**
-   * Unlock Next Level
-   */
+  progress.currentLevel = level;
 
-  const nextLevel = level + 1;
+  // Unlock next level
 
-  if (
+  progress.unlockedLevel = Math.max(
 
-    !progress.unlockedLevels.includes(
-      nextLevel
-    )
+    progress.unlockedLevel,
 
-  ) {
+    level + 1
 
-    progress.unlockedLevels.push(
-      nextLevel
-    );
-
-  }
+  );
 
   saveProgress(progress);
 
@@ -152,7 +150,7 @@ export function getStars(level) {
 
   const progress = getProgress();
 
-  return progress.completedLevels[level] || 0;
+  return progress.stars[level] || 0;
 
 }
 
@@ -166,7 +164,7 @@ export function isCompleted(level) {
 
   const progress = getProgress();
 
-  return progress.completedLevels[level] !== undefined;
+  return !!progress.completedLevels[level];
 
 }
 
@@ -180,7 +178,19 @@ export function isLocked(level) {
 
   const progress = getProgress();
 
-  return !progress.unlockedLevels.includes(level);
+  return level > progress.unlockedLevel;
+
+}
+
+/**
+ * -----------------------------------
+ * Current Level
+ * -----------------------------------
+ */
+
+export function getCurrentLevel() {
+
+  return getProgress().currentLevel;
 
 }
 

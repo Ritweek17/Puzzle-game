@@ -21,6 +21,8 @@ import Board from "../../components/Board/Board";
 import { playSound } from "../../utils/sound";
 import Confetti from "react-confetti";
 import { motion } from "framer-motion"; 
+import { updateStats } from "../../utils/stats";
+import { ArrowLeft } from "lucide-react";
 
 
 import useGame from "../../hooks/useGame";
@@ -137,7 +139,37 @@ useEffect(() => {
 
   );
 
-}, [completed, level]);
+  // 📊 Update Statistics
+
+  updateStats({
+
+    gamesPlayed: 1,
+
+    levelsCompleted: 1,
+
+    totalStars: calculateStars(),
+
+    wrongClicks,
+
+    hintsUsed: 3 - hints,
+
+    undosUsed: 3 - undos,
+
+  });
+
+}, [
+
+  completed,
+
+  level,
+
+  wrongClicks,
+
+  hints,
+
+  undos,
+
+]);
 
 /**
  * -----------------------------------
@@ -189,11 +221,23 @@ useEffect(() => {
 
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#FFF8EE] via-[#F8F5FF] to-[#EAFDFC]">
 
-      <BackgroundDecoration />
+  <BackgroundDecoration />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-6">
+  <div className="relative z-10 max-w-7xl mx-auto px-4 py-6">
+
+    {/* Header */}
+
+    <div className="flex items-start gap-4">
+
+      {/* Top Bar */}
+
+      <div className="flex-1">
 
         <TopBar
+
+          showBack
+
+          onBack={() => navigate("/levels")}
 
           level={level}
 
@@ -211,39 +255,47 @@ useEffect(() => {
 
         />
 
-        <div className="mt-8 flex justify-center">
+      </div>
 
-          <Board
+    </div>
 
-            puzzle={puzzle}
+    {/* Board */}
 
-            playerBoard={playerBoard}
+    <div className="mt-8 flex justify-center">
 
-            onCellClick={handleCellClick}
+      <Board
 
-            shake={shakeBoard}
+        puzzle={puzzle}
 
-          />
+        playerBoard={playerBoard}
 
-        </div>
+        onCellClick={handleCellClick}
 
-      <BottomBar
-
-        onHint={useHint}
-
-        onUndo={undoLastMove}
-
-        onReset={resetGame}
-
-        hints={hints}
-
-        undos={undos}
-
-        gameOver={gameOver}
-
-        completed={completed}
+        shake={shakeBoard}
 
       />
+
+    </div>
+
+    {/* Bottom Bar */}
+
+    <BottomBar
+
+      onHint={useHint}
+
+      onUndo={undoLastMove}
+
+      onReset={resetGame}
+
+      hints={hints}
+
+      undos={undos}
+
+      gameOver={gameOver}
+
+      completed={completed}
+
+    />
       {/* 🎊 Confetti */}
 
     {completed && (

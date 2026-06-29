@@ -12,6 +12,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { BarChart3 } from "lucide-react";
 
 import {
   ArrowLeft,
@@ -196,6 +197,27 @@ function Settings() {
             </span>
 
           </button>
+<button
+
+  onClick={() => navigate("/statistics")}
+
+  className="w-full flex items-center justify-between p-4 rounded-xl bg-blue-500 hover:bg-blue-600 text-white transition"
+
+>
+
+  <div className="flex items-center gap-3">
+
+    <BarChart3 />
+
+    <span className="font-semibold">
+
+      Statistics
+
+    </span>
+
+  </div>
+
+</button>
 
           {/* Reset */}
 

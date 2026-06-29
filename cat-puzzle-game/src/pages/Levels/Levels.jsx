@@ -3,52 +3,68 @@
  * File : Levels.jsx
  *
  * Purpose :
- * Level Selection Screen
+ * Premium Level Selection Screen
  *
  * Status :
- * Final v2
- * Part 1
+ * Final v3
+ * Part 1 / 4
  * ----------------------------------------------------
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-import { Trophy } from "lucide-react";
+import { ArrowLeft, Settings, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
 
-import TopBar from "../../components/TopBar/TopBar";
-import LevelCard from "../../components/LevelCard/LevelCard";
 import BackgroundDecoration from "../../components/BackgroundDecoration/BackgroundDecoration";
-
-import levels from "../../data/levels";
+import TopBar from "../../components/TopBar/TopBar";
+import ContinueCard from "../../components/ContinueCard/ContinueCard";
+import DifficultyTabs from "../../components/DifficultyTabs/DifficultyTabs";
+import ProgressCard from "../../components/ProgressCard/ProgressCard";
+import Pagination from "../../components/Pagination/Pagination";
+import LevelCard from "../../components/LevelCard/LevelCard";
 
 import happyCat from "../../assets/mascot/happy.png";
-import { Settings } from "lucide-react";
+
+import levels from "../../data/levels";
 
 import {
   isLocked,
   isCompleted,
   getStars,
+  getCurrentLevel,
 } from "../../utils/progress";
 
 function Levels() {
 
   const navigate = useNavigate();
 
+  const currentLevel = getCurrentLevel();
+
   /**
-   * -----------------------------------
    * Difficulty
-   * -----------------------------------
    */
 
   const [difficulty, setDifficulty] =
     useState("Easy");
 
   /**
-   * -----------------------------------
+   * Pagination
+   */
+
+  const LEVELS_PER_PAGE = 20;
+
+  const [page, setPage] =
+    useState(1);
+
+  useEffect(() => {
+
+    setPage(1);
+
+  }, [difficulty]);
+
+  /**
    * Filter Levels
-   * -----------------------------------
    */
 
   const filteredLevels = useMemo(() => {
@@ -64,28 +80,58 @@ function Levels() {
   }, [difficulty]);
 
   /**
-   * -----------------------------------
-   * Progress
-   * -----------------------------------
+   * Pagination
    */
 
-  const completedLevels = levels.filter(
+  const totalPages = Math.ceil(
 
-    (level) =>
+    filteredLevels.length /
+
+    LEVELS_PER_PAGE
+
+  );
+
+  const paginatedLevels = filteredLevels.slice(
+
+    (page - 1) * LEVELS_PER_PAGE,
+
+    page * LEVELS_PER_PAGE
+
+  );
+
+  /**
+   * Progress
+   */
+
+  const easyCompleted = levels.filter(
+
+    level =>
+
+      level.difficulty === "Easy" &&
 
       isCompleted(level.id)
 
   ).length;
 
-  const totalLevels =
-    levels.length;
+  const mediumCompleted = levels.filter(
 
-  const progress =
+    level =>
 
-    (completedLevels /
-      totalLevels) *
+      level.difficulty === "Medium" &&
 
-    100;
+      isCompleted(level.id)
+
+  ).length;
+
+  const hardCompleted = levels.filter(
+
+    level =>
+
+      level.difficulty === "Hard" &&
+
+      isCompleted(level.id)
+
+  ).length;
 
   return (
 
@@ -93,70 +139,100 @@ function Levels() {
 
       <BackgroundDecoration />
 
-      <div className="relative z-10 max-w-6xl mx-auto">
+      <div className="relative z-10 max-w-7xl mx-auto">
 
-       <div className="flex justify-between items-center">
+        {/* ================= Header ================= */}
 
-  <TopBar
-    title="Level Select"
-    rightIcon={<Trophy size={20} />}
-  />
+        <div className="flex items-center justify-between gap-4 mb-8">
 
-  <button
+          <button
 
-    onClick={() => navigate("/settings")}
+            onClick={() => navigate("/")}
 
-    className="
-      ml-4
-      w-12
-      h-12
-      rounded-full
-      bg-white
-      shadow-lg
-      flex
-      items-center
-      justify-center
-      hover:rotate-90
-      hover:scale-110
-      transition-all
-      duration-300
-    "
+            className="
+              w-12
+              h-12
+              rounded-full
+              bg-white
+              shadow-lg
+              flex
+              items-center
+              justify-center
+              hover:scale-110
+              transition-all
+              duration-300
+            "
 
-  >
+          >
 
-    <Settings size={24} />
+            <ArrowLeft size={22} />
 
-  </button>
+          </button>
 
-</div>
+          <div className="flex-1">
 
-        {/* Hero */}
+            <TopBar
+
+              title="Level Select"
+
+              rightIcon={<Trophy size={20} />}
+
+            />
+
+          </div>
+
+          <button
+
+            onClick={() => navigate("/settings")}
+
+            className="
+              w-12
+              h-12
+              rounded-full
+              bg-white
+              shadow-lg
+              flex
+              items-center
+              justify-center
+              hover:rotate-90
+              hover:scale-110
+              transition-all
+              duration-300
+            "
+
+          >
+
+            <Settings size={22} />
+
+          </button>
+
+        </div>
+
+        {/* ================= Continue ================= */}
+
+        <ContinueCard
+
+          currentLevel={currentLevel}
+
+          onContinue={() =>
+
+            navigate(`/game/${currentLevel}`)
+
+          }
+
+        />
+
+        {/* ================= Hero ================= */}
 
         <motion.div
 
-          initial={{
+          initial={{ opacity: 0, y: 20 }}
 
-            opacity: 0,
+          animate={{ opacity: 1, y: 0 }}
 
-            y: 20,
+          transition={{ duration: 0.5 }}
 
-          }}
-
-          animate={{
-
-            opacity: 1,
-
-            y: 0,
-
-          }}
-
-          transition={{
-
-            duration: 0.5,
-
-          }}
-
-          className="text-center mt-8"
+          className="text-center mt-10"
 
         >
 
@@ -166,11 +242,37 @@ function Levels() {
 
             alt="Happy Cat"
 
-            className="w-28 mx-auto  rounded-full shadow-lg"
+            className="
+
+              w-24
+
+              h-24
+
+              rounded-full
+
+              mx-auto
+
+              shadow-lg
+
+            "
 
           />
 
-          <h2 className="text-4xl font-bold mt-5 text-[#2E2E3A]">
+          <h2
+
+            className="
+
+              text-4xl
+
+              font-bold
+
+              mt-5
+
+              text-[#2E2E3A]
+
+            "
+
+          >
 
             Choose Your Challenge
 
@@ -178,143 +280,72 @@ function Levels() {
 
           <p className="mt-2 text-gray-600">
 
-            Complete puzzles to unlock new levels.
+            Complete puzzles to unlock all 400 levels.
 
           </p>
 
         </motion.div>
 
-        {/* Progress */}
+        {/* ================= Progress ================= */}
 
-        <motion.div
+        <div className="mt-10">
 
-          initial={{
+          <ProgressCard
 
-            opacity: 0,
+            easy={easyCompleted}
 
-          }}
+            medium={mediumCompleted}
 
-          animate={{
+            hard={hardCompleted}
 
-            opacity: 1,
-
-          }}
-
-          transition={{
-
-            delay: 0.2,
-
-          }}
-
-          className="mt-10 bg-white/70 backdrop-blur-xl rounded-3xl border border-white/60 shadow-lg p-6"
-
-        >
-
-          <div className="flex justify-between font-semibold mb-3">
-
-            <span>
-
-              Progress
-
-            </span>
-
-            <span>
-
-              {completedLevels}/
-              {totalLevels}
-
-              {" "}Levels
-
-            </span>
-
-          </div>
-
-          <div className="w-full h-3 rounded-full bg-gray-200 overflow-hidden">
-
-            <motion.div
-
-              initial={{
-
-                width: 0,
-
-              }}
-
-              animate={{
-
-                width: `${progress}%`,
-
-              }}
-
-              transition={{
-
-                duration: 1,
-
-              }}
-
-              className="h-full rounded-full bg-gradient-to-r from-[#7C5CFF] to-[#54D6C7]"
-
-            />
-
-          </div>
-
-        </motion.div>
-        {/* Difficulty */}
-
-        <div className="flex justify-center gap-4 mt-10 flex-wrap">
-
-          {["Easy", "Medium", "Hard"].map((item) => (
-
-            <button
-
-              key={item}
-
-              onClick={() => setDifficulty(item)}
-
-              className={`
-
-                px-7
-                py-3
-                rounded-full
-                font-bold
-                transition-all
-                duration-300
-
-                ${
-                  difficulty === item
-                    ? "bg-[#7C5CFF] text-white shadow-lg"
-                    : "bg-white/70 backdrop-blur-lg border border-white/60 text-[#2E2E3A]"
-                }
-
-              `}
-
-            >
-
-              {item}
-
-            </button>
-
-          ))}
+          />
 
         </div>
 
-        {/* Level Grid */}
+        {/* ================= Difficulty ================= */}
+
+        <div className="mt-10">
+
+          <DifficultyTabs
+
+            difficulty={difficulty}
+
+            setDifficulty={setDifficulty}
+
+          />
+
+        </div>
+        {/* ================= Level Grid ================= */}
 
         <motion.div
 
           layout
 
+          initial={{ opacity: 0 }}
+
+          animate={{ opacity: 1 }}
+
+          transition={{ duration: 0.4 }}
+
           className="
-            grid
-            grid-cols-2
-            sm:grid-cols-3
-            lg:grid-cols-5
-            gap-6
+
             mt-10
+
+            grid
+
+            grid-cols-2
+
+            sm:grid-cols-4
+
+            lg:grid-cols-5
+
+            gap-6
+
           "
 
         >
 
-          {filteredLevels.map((level) => (
+          {paginatedLevels.map((level) => (
 
             <LevelCard
 
@@ -327,6 +358,8 @@ function Levels() {
               completed={isCompleted(level.id)}
 
               locked={isLocked(level.id)}
+
+              current={level.id === currentLevel}
 
               onClick={() => {
 
@@ -348,6 +381,99 @@ function Levels() {
 
         </motion.div>
 
+        {/* ================= Pagination ================= */}
+
+        <Pagination
+
+          page={page}
+
+          setPage={setPage}
+
+          totalPages={totalPages}
+
+        />
+
+        {/* ================= Footer Text ================= */}
+
+        <motion.div
+
+          initial={{
+
+            opacity: 0,
+
+          }}
+
+          animate={{
+
+            opacity: 1,
+
+          }}
+
+          transition={{
+
+            delay: 0.3,
+
+          }}
+
+          className="
+
+            mt-10
+
+            text-center
+
+            text-gray-500
+
+            text-sm
+
+          "
+
+        >
+
+          Showing
+
+          {" "}
+
+          <span className="font-semibold">
+
+            {(page - 1) * LEVELS_PER_PAGE + 1}
+
+          </span>
+
+          {" "}
+
+          -
+
+          {" "}
+
+          <span className="font-semibold">
+
+            {Math.min(
+
+              page * LEVELS_PER_PAGE,
+
+              filteredLevels.length
+
+            )}
+
+          </span>
+
+          {" "}
+
+          of
+
+          {" "}
+
+          <span className="font-semibold">
+
+            {filteredLevels.length}
+
+          </span>
+
+          {" "}
+
+          {difficulty} Levels
+
+        </motion.div>
       </div>
 
     </div>

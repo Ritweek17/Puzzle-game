@@ -6,9 +6,11 @@
  * Displays top information.
  *
  * Status :
- * Final v3
+ * Final v6
  * ----------------------------------------------------
  */
+
+import { ArrowLeft } from "lucide-react";
 
 import normalMascot from "../../assets/mascot/normal.png";
 import happyMascot from "../../assets/mascot/happy.png";
@@ -19,23 +21,38 @@ import winMascot from "../../assets/mascot/win.png";
 function TopBar({
 
   // Levels Page
+
   title,
+
   rightIcon,
 
   // Game Page
+
   level,
+
   lives,
+
   hints,
+
   foundCats,
+
   totalCats,
+
   completed,
+
   gameOver,
+
+  // Navigation
+
+  showBack = false,
+
+  onBack,
 
 }) {
 
   /**
    * -----------------------------------
-   * Level Select Page
+   * Levels Page
    * -----------------------------------
    */
 
@@ -52,17 +69,17 @@ function TopBar({
           p-4
           flex
           items-center
-          justify-between
+          justify-center
         "
       >
 
-        <h1 className="text-2xl font-bold text-[#2E2E3A]">
+        <div className="flex items-center gap-3">
 
-          {title}
+          <h1 className="text-2xl font-bold text-[#2E2E3A]">
 
-        </h1>
+            {title}
 
-        <div>
+          </h1>
 
           {rightIcon}
 
@@ -76,35 +93,19 @@ function TopBar({
 
   /**
    * -----------------------------------
-   * Select Mascot
+   * Mascot
    * -----------------------------------
    */
 
   function getMascot() {
 
-    if (completed) {
+    if (completed) return winMascot;
 
-      return winMascot;
+    if (gameOver) return sadMascot;
 
-    }
+    if (foundCats > 0) return happyMascot;
 
-    if (gameOver) {
-
-      return sadMascot;
-
-    }
-
-    if (foundCats > 0) {
-
-      return happyMascot;
-
-    }
-
-    if (hints <= 1) {
-
-      return thinkingMascot;
-
-    }
+    if (hints <= 1) return thinkingMascot;
 
     return normalMascot;
 
@@ -112,122 +113,187 @@ function TopBar({
 
   /**
    * -----------------------------------
-   * Game Top Bar
+   * Game TopBar
    * -----------------------------------
    */
 
   return (
 
-    <div
-      className="
-        bg-white/90
-        backdrop-blur-md
-        rounded-2xl
-        shadow-xl
-        p-4
-        flex
-        flex-wrap
-        items-center
-        justify-between
-        gap-4
-      "
-    >
+    <div className="space-y-6">
 
-      {/* Level */}
+      {/* ================= Header ================= */}
 
-      <div className="flex flex-col">
+      <div
+        className="
+          bg-white/90
+          backdrop-blur-md
+          rounded-3xl
+          shadow-xl
+          px-6
+          py-5
+          flex
+          items-center
+          relative
+        "
+      >
 
-        <span className="text-xs text-gray-500">
+        {/* Back */}
 
-          LEVEL
+        {showBack && (
 
-        </span>
+          <button
 
-        <span className="text-2xl font-bold">
+            onClick={onBack}
 
-          {level}
+            className="
+              w-12
+              h-12
+              rounded-full
+              bg-white
+              border
+              border-gray-100
+              shadow-lg
+              hover:shadow-xl
+              hover:scale-105
+              active:scale-95
+              transition-all
+              duration-200
+              flex
+              items-center
+              justify-center
+              absolute
+              left-5
+            "
 
-        </span>
+          >
+
+            <ArrowLeft
+
+              size={24}
+
+              strokeWidth={2.5}
+
+            />
+
+          </button>
+
+        )}
+
+        {/* Level */}
+
+        <div className="w-full text-center">
+
+          <p className="text-sm tracking-wide text-gray-500">
+
+            LEVEL
+
+          </p>
+
+          <h2 className="text-5xl font-bold text-[#2E2E3A] mt-1">
+
+            {level}
+
+          </h2>
+
+        </div>
 
       </div>
 
-      {/* Lives */}
+      {/* ================= Stats ================= */}
 
-      <div className="flex flex-col items-center">
+      <div
+        className="
+          bg-white/90
+          backdrop-blur-md
+          rounded-3xl
+          shadow-xl
+          px-6
+          py-5
+          flex
+          justify-around
+          items-center
+        "
+      >
 
-        <span className="text-xs text-gray-500">
+        {/* Lives */}
 
-          LIVES
+        <div className="text-center">
 
-        </span>
+          <p className="text-xs text-gray-500 mb-2">
 
-        <div className="text-2xl">
+            LIVES
 
-          {Array.from({
+          </p>
 
-            length: lives,
+          <div className="text-3xl">
 
-          }).map((_, index) => (
+            {Array.from({
 
-            <span key={index}>
+              length: lives,
 
-              ❤️
+            }).map((_, index) => (
+
+              <span key={index}>
+
+                ❤️
+
+              </span>
+
+            ))}
+
+          </div>
+
+        </div>
+
+        {/* Found */}
+
+        <div className="text-center">
+
+          <p className="text-xs text-gray-500 mb-2">
+
+            FOUND
+
+          </p>
+
+          <div className="flex items-center gap-2">
+
+            <img
+
+              src={getMascot()}
+
+              alt="Mascot"
+
+              className="w-11 h-11 object-contain"
+
+            />
+
+            <span className="text-3xl font-bold">
+
+              {foundCats}/{totalCats}
 
             </span>
 
-          ))}
+          </div>
 
         </div>
 
-      </div>
+        {/* Hints */}
 
-      {/* Found */}
+        <div className="text-center">
 
-      <div className="flex flex-col items-center">
+          <p className="text-xs text-gray-500 mb-2">
 
-        <span className="text-xs text-gray-500">
+            HINTS
 
-          FOUND
+          </p>
 
-        </span>
+          <div className="text-3xl font-bold">
 
-        <div className="flex items-center gap-2">
+            💡 {hints}
 
-          <img
-
-            src={getMascot()}
-
-            alt="Mascot"
-
-            className="w-10 h-10 object-contain"
-
-          />
-
-          <span className="text-xl font-bold">
-
-            {foundCats}/{totalCats}
-
-          </span>
+          </div>
 
         </div>
-
-      </div>
-
-      {/* Hints */}
-
-      <div className="flex flex-col items-center">
-
-        <span className="text-xs text-gray-500">
-
-          HINTS
-
-        </span>
-
-        <span className="text-xl font-bold">
-
-          💡 {hints}
-
-        </span>
 
       </div>
 
