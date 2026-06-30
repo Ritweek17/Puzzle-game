@@ -1,5 +1,6 @@
 import { BookOpen, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { usePlayAction } from "../../hooks/usePlayAction";
 
 import TopBar from "../../components/TopBar/TopBar";
 import RuleCard from "../../components/RuleCard/RuleCard";
@@ -13,6 +14,7 @@ import sadCat from "../../assets/mascot/sad.png";
 
 function HowToPlay() {
   const navigate = useNavigate();
+  const { handlePlayRequest, renderPlayModal } = usePlayAction();
 
   return (
     <div className="relative overflow-hidden min-h-screen bg-gradient-to-br from-[#FFF8EE] via-[#F8F5FF] to-[#EAFDFC] p-6">
@@ -21,7 +23,7 @@ function HowToPlay() {
 
       <div className="relative z-10 max-w-6xl mx-auto">
 
-        <TopBar title="How To Play" />
+        <TopBar title="How To Play" showBack onBack={() => navigate("/")} />
 
         {/* Hero */}
 
@@ -234,13 +236,15 @@ function HowToPlay() {
           <Button
             text="Start Playing"
             icon={<Play size={22} />}
-            onClick={() => navigate("/levels")}
+            onClick={handlePlayRequest}
             className="bg-gradient-to-r from-[#7C5CFF] to-[#5B3DF5]"
           />
 
         </div>
 
       </div>
+
+      {renderPlayModal()}
 
     </div>
   );

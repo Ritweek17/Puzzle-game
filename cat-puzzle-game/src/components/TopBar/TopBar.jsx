@@ -6,7 +6,7 @@
  * Displays top information.
  *
  * Status :
- * Final v6
+ * Final v6 — patch: title-mode now supports optional Back button
  * ----------------------------------------------------
  */
 
@@ -20,7 +20,7 @@ import winMascot from "../../assets/mascot/win.png";
 
 function TopBar({
 
-  // Levels Page
+  // Levels Page / Title Pages
 
   title,
 
@@ -42,7 +42,7 @@ function TopBar({
 
   gameOver,
 
-  // Navigation
+  // Navigation (supported in both title-mode and game-mode)
 
   showBack = false,
 
@@ -52,7 +52,8 @@ function TopBar({
 
   /**
    * -----------------------------------
-   * Levels Page
+   * Title Bar (Levels page, HowToPlay, Settings, etc.)
+   * Now supports an optional Back button on the left.
    * -----------------------------------
    */
 
@@ -70,8 +71,49 @@ function TopBar({
           flex
           items-center
           justify-center
+          relative
         "
       >
+
+        {/* Optional Back Button */}
+
+        {showBack && (
+
+          <button
+
+            onClick={onBack}
+
+            className="
+              w-10
+              h-10
+              rounded-full
+              bg-white
+              border
+              border-gray-100
+              shadow-lg
+              hover:shadow-xl
+              hover:scale-105
+              active:scale-95
+              transition-all
+              duration-200
+              flex
+              items-center
+              justify-center
+              absolute
+              left-4
+            "
+
+            aria-label="Go back"
+
+          >
+
+            <ArrowLeft size={20} strokeWidth={2.5} />
+
+          </button>
+
+        )}
+
+        {/* Centred Title */}
 
         <div className="flex items-center gap-3">
 
