@@ -77,9 +77,7 @@ import {
   saveProgressData,
   setAuthUser,
 } from "../utils/progress";
-
-import { getLocalProfile, saveLocalProfile } from "../utils/localProfile";
-
+import { getLocalProfile, saveLocalProfile, clearLocalProfile } from "../utils/localProfile";
 const AuthContext = createContext(null);
 
 /**
@@ -175,8 +173,16 @@ export function AuthProvider({ children }) {
 
       const localProf = getLocalProfile();
 
+      // We only merge local guest profile if they are migrating from Guest to Google.
+      // A guest profile has no uid or isGuest: true, and is completed.
+      const shouldMigrate = localProf && localProf.profileCompleted && (!localProf.uid || localProf.uid === "guest" || localProf.isGuest);
+
       if (!snap.exists()) {
-        let mergedProfile = (localProf && localProf.profileCompleted) ? { ...localProf } : {};
+        let mergedProfile = shouldMigrate ? { ...localProf } : {};
+        
+        // Remove guest-specific flags
+        delete mergedProfile.isGuest;
+        delete mergedProfile.uid;
         
         if (!mergedProfile.username) {
           mergedProfile.username = firebaseUser.displayName || "Player";
@@ -212,13 +218,37 @@ export function AuthProvider({ children }) {
           lastUpdated: serverTimestamp()
         });
         setPlayerProfile(mergedProfile);
+
+        if (shouldMigrate) {
+          clearLocalProfile();
+        }
       } else {
         const existingData = snap.data();
-        
-        // If the local user already had a completed profile, merge it to cloud
-        let mergedProfile = (localProf && localProf.profileCompleted) 
-          ? { ...localProf } 
-          : { ...existingData.profile };
+        let firestoreProfile = existingData.profile || {};
+
+        let mergedProfile;
+        if (shouldMigrate) {
+          // Merge local guest profile with firestore profile
+          // Priority for username: custom guest username > firestore username > google displayName
+          mergedProfile = { ...firestoreProfile };
+          
+          if (localProf.username && localProf.username !== "Guest" && localProf.username !== "Guest Player") {
+            mergedProfile.username = localProf.username;
+          }
+          
+          if (localProf.selectedAvatar && localProf.selectedAvatar !== "google") {
+            mergedProfile.selectedAvatar = localProf.selectedAvatar;
+          }
+          if (localProf.avatar) {
+            mergedProfile.avatar = localProf.avatar;
+          }
+          
+          // Clear local profile after migration
+          clearLocalProfile();
+        } else {
+          // Normal refresh: Firestore profile is the sole source of truth!
+          mergedProfile = { ...firestoreProfile };
+        }
 
         if (!mergedProfile.username) {
           mergedProfile.username = firebaseUser.displayName || existingData?.account?.googleName || "Player";
