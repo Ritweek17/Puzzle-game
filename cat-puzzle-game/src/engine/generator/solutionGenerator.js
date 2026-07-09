@@ -26,17 +26,13 @@ function shuffle(array, random) {
   return copy;
 }
 
-/**
- * Check if cat placement is valid.
- */
 function canPlace(solution, row, col) {
   for (const cat of solution) {
-    // Same column
-    if (cat.col === col) {
-      return false;
-    }
+    // Same column or same row check
+    if (cat.col === col) return false;
+    if (cat.row === row) return false;
 
-    // Adjacent
+    // Adjacent checks (horizontal, vertical, diagonal)
     if (
       Math.abs(cat.row - row) <= 1 &&
       Math.abs(cat.col - col) <= 1
@@ -48,66 +44,40 @@ function canPlace(solution, row, col) {
   return true;
 }
 
-/**
- * Recursive backtracking.
- */
-function solve(size, row, solution, random) {
-  if (row === size) {
+function solveRandomRows(size, rows, rowIndex, solution, random) {
+  if (rowIndex === size) {
     return true;
   }
 
-  const columns = shuffle(
-    [...Array(size).keys()],
-    random
-  );
+  const row = rows[rowIndex];
+  const columns = shuffle([...Array(size).keys()], random);
 
   for (const col of columns) {
-    if (!canPlace(solution, row, col)) {
-      continue;
+    if (canPlace(solution, row, col)) {
+      solution.push({
+        row,
+        col,
+      });
+
+      if (solveRandomRows(size, rows, rowIndex + 1, solution, random)) {
+        return true;
+      }
+
+      solution.pop();
     }
-
-    solution.push({
-      row,
-      col,
-    });
-
-    if (
-      solve(
-        size,
-        row + 1,
-        solution,
-        random
-      )
-    ) {
-      return true;
-    }
-
-    solution.pop();
   }
 
   return false;
 }
 
-/**
- * Generate complete solution.
- */
-export function generateSolution(
-  size,
-  random
-) {
+export function generateSolution(size, random) {
   const solution = [];
+  const rows = shuffle([...Array(size).keys()], random);
 
-  const success = solve(
-    size,
-    0,
-    solution,
-    random
-  );
+  const success = solveRandomRows(size, rows, 0, solution, random);
 
   if (!success) {
-    throw new Error(
-      "Unable to generate solution."
-    );
+    throw new Error("Unable to generate solution.");
   }
 
   return solution;

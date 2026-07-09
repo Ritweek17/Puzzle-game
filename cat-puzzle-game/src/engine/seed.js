@@ -21,13 +21,12 @@ export function createSeed(level) {
  */
 
 export function seededRandom(seed) {
-  let value = seed;
+  let h = seed | 0;
 
   return function () {
-    value =
-      (value * 9301 + 49297) %
-      233280;
-
-    return value / 233280;
+    h = (h + 0x6D2B79F5) | 0;
+    let t = Math.imul(h ^ (h >>> 15), 1 | h);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }

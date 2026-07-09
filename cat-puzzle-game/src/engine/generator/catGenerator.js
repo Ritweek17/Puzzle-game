@@ -101,6 +101,10 @@ function solve(
   );
 
   for (const cell of cells) {
+    if (allSolutions.length > 1) {
+      break;
+    }
+
     if (
       !canPlace(
         cats,
@@ -165,4 +169,43 @@ export function generateCats(
   }
 
   return allSolutions;
+}
+
+export function hasAlternativeSolution(regions, baseCats, random) {
+  const grouped = groupCellsByRegion(regions);
+  const baseCatsSet = new Set(baseCats.map(c => `${c.row},${c.col}`));
+  
+  let foundAlternative = false;
+
+  function solveAlt(index, cats) {
+    if (foundAlternative) return;
+
+    if (index >= grouped.length) {
+      let isBase = true;
+      for (const cat of cats) {
+        if (!baseCatsSet.has(`${cat.row},${cat.col}`)) {
+          isBase = false;
+          break;
+        }
+      }
+      if (!isBase) {
+        foundAlternative = true;
+      }
+      return;
+    }
+
+    const cells = grouped[index];
+    for (const cell of cells) {
+      if (foundAlternative) break;
+
+      if (canPlace(cats, cell.row, cell.col)) {
+        cats.push(cell);
+        solveAlt(index + 1, cats);
+        cats.pop();
+      }
+    }
+  }
+
+  solveAlt(0, []);
+  return foundAlternative;
 }
