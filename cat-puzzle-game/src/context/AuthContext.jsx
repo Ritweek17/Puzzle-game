@@ -328,104 +328,121 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let unsubscribe = null;
     let isMounted = true;
-    let redirectResolved = false;
-    let authStateResolved = false;
-    let firebaseUserObj = null;
-    let redirectUser = null;
 
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    async function initializeAuthentication() {
+      console.log("[AUTH] APP START");
+      console.log("[AUTH] AUTH RESTORING");
 
-    async function handleStartup() {
-      // REDIRECT HANDLING: ONLY run getRedirectResult(auth) to process mobile returns.
-      // Do not block desktop auth.
-      if (!isMobile) {
-        redirectResolved = true;
-        if (authStateResolved) {
-          await finalizeAuth(firebaseUserObj);
+      let finalUser = null;
+
+      // 1. Check for redirect result on mobile first.
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile) {
+        try {
+          const result = await getRedirectResult(auth);
+          if (result && result.user) {
+            console.log("[AUTH] REDIRECT RESULT RECEIVED:", result.user.email);
+            finalUser = result.user;
+          }
+        } catch (error) {
+          console.error("[AUTH] Redirect result failed:", error);
         }
-        return;
       }
 
+      // 2. Wait for onAuthStateChanged to resolve persistence (or confirm logged out).
       try {
-        const result = await getRedirectResult(auth);
-        if (result && result.user && isMounted) {
-          console.log("Redirect login successful for:", result.user.email);
-          redirectUser = result.user;
+        const persistentUser = await new Promise((resolve) => {
+          const unsub = listenToAuth((user) => {
+            unsub(); // unsubscribe immediately, we only need the first result!
+            resolve(user);
+          });
+        });
+
+        if (persistentUser) {
+          console.log("[AUTH] AUTH USER FOUND:", persistentUser.email);
+          finalUser = persistentUser;
         }
       } catch (error) {
-        console.error("Google Redirect login failed. Code:", error.code, "Message:", error.message);
-      } finally {
-        if (isMounted) {
-          redirectResolved = true;
-          if (authStateResolved) {
-            await finalizeAuth(firebaseUserObj);
-          }
-        }
+        console.error("[AUTH] Persistent auth lookup failed:", error);
       }
-    }
 
-    async function finalizeAuth(fbUser) {
-      if (!isMounted) return;
-      
-      const userToUse = fbUser || redirectUser;
-
-      if (userToUse) {
-        setUser(userToUse);
-        await handleFirebaseLogin(userToUse);
-        
-        if (redirectUser) {
-          try {
-            const userRef = doc(db, "users", userToUse.uid);
-            const snap = await getDoc(userRef);
-            
-            if (!snap.exists() || (!snap.data().profile?.profileCompleted && !getLocalProfile())) {
-              navigate("/onboarding");
-            } else {
-              navigate("/");
+      // 3. Process the resolved user (either Google user or Guest).
+      if (isMounted) {
+        if (finalUser) {
+          console.log("[AUTH] PLAYER LOADING for UID:", finalUser.uid);
+          setUser(finalUser);
+          await handleFirebaseLogin(finalUser);
+          console.log("[AUTH] PLAYER LOADED");
+          
+          if (isMobile) {
+            try {
+              const userRef = doc(db, "users", finalUser.uid);
+              const snap = await getDoc(userRef);
+              
+              if (!snap.exists() || (!snap.data().profile?.profileCompleted && !getLocalProfile())) {
+                navigate("/onboarding");
+              } else {
+                navigate("/levels");
+              }
+            } catch (e) {
+              console.error("[AUTH] Error checking onboarding status after redirect:", e);
+              navigate("/levels");
             }
-          } catch (e) {
-            console.error("Error checking onboarding status after redirect:", e);
-            navigate("/");
           }
-        }
-      } else {
-        // Firebase says no user. Load Local Profile.
-        const localProf = getLocalProfile();
-        setUser({ isGuest: true, uid: "guest" });
-        setAuthUser(null);
-
-        if (localProf && localProf.profileCompleted) {
-          setPlayerProfile(localProf);
-          setSyncStatus("offline");
         } else {
-          setPlayerProfile(null);
-          setSyncStatus("idle");
-          if (window.location.pathname !== "/onboarding") {
-            navigate("/onboarding");
+          console.log("[AUTH] NO USER FOUND, CREATING/LOADING GUEST");
+          const localProf = getLocalProfile();
+          setUser({ isGuest: true, uid: "guest" });
+          setAuthUser(null);
+
+          if (localProf && localProf.profileCompleted) {
+            setPlayerProfile(localProf);
+            setSyncStatus("offline");
+            console.log("[AUTH] GUEST LOADED (offline)");
+          } else {
+            setPlayerProfile(null);
+            setSyncStatus("idle");
+            console.log("[AUTH] GUEST CREATED");
+            if (window.location.pathname !== "/onboarding") {
+              navigate("/onboarding");
+            }
           }
         }
+
+        // 4. Set loading to false only after everything is fully loaded and initialized!
+        setLoading(false);
+        console.log("[AUTH] AUTH INITIALIZATION COMPLETED");
       }
-      setLoading(false);
-    }
 
-    handleStartup();
-
-    unsubscribe = listenToAuth(async (fbUser) => {
-      if (!isMounted) return;
-      if (fbUser) {
-        console.log("Firebase Auth User state changed:", {
-          uid: fbUser.uid,
-          email: fbUser.email,
-          photoURL: fbUser.photoURL
+      // 5. Register the long-running auth listener to handle subsequent logins, logouts, etc.
+      if (isMounted) {
+        unsubscribe = listenToAuth(async (currentUser) => {
+          if (!isMounted) return;
+          console.log("[AUTH] Auth state listener triggered:", currentUser?.email || "No User");
+          
+          if (currentUser) {
+            setUser(currentUser);
+            await handleFirebaseLogin(currentUser);
+          } else {
+            setUser((prev) => {
+              if (prev && !prev.isGuest) {
+                const localProf = getLocalProfile();
+                setAuthUser(null);
+                if (localProf && localProf.profileCompleted) {
+                  setPlayerProfile(localProf);
+                } else {
+                  setPlayerProfile(null);
+                }
+                return { isGuest: true, uid: "guest" };
+              }
+              return prev;
+            });
+          }
         });
       }
-      firebaseUserObj = fbUser;
-      authStateResolved = true;
+    }
 
-      if (redirectResolved) {
-        await finalizeAuth(fbUser);
-      }
-    });
+    initializeAuthentication();
 
     return () => {
       isMounted = false;
