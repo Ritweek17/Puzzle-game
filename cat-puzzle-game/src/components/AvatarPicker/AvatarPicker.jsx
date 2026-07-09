@@ -40,12 +40,12 @@ function AvatarPicker({ selectedAvatar, onSelect, googlePhotoUrl }) {
             key={avatar.id}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => onSelect(avatar.src)}
+            onClick={() => onSelect(avatar.id, avatar.src)}
             className={`
               cursor-pointer relative rounded-full overflow-hidden
               aspect-square flex items-center justify-center
               transition-all duration-200
-              ${selectedAvatar === avatar.src 
+              ${(selectedAvatar === avatar.id || selectedAvatar === avatar.src) 
                 ? "ring-4 ring-[#7C5CFF] ring-offset-2 scale-105" 
                 : "hover:ring-2 hover:ring-gray-300 ring-offset-1 opacity-90 hover:opacity-100"
               }

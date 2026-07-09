@@ -7,6 +7,7 @@ import BackgroundDecoration from "../../components/BackgroundDecoration/Backgrou
 import Button from "../../components/Button/Button";
 import AvatarPicker from "../../components/AvatarPicker/AvatarPicker";
 import { User } from "lucide-react";
+import { AVATAR_MAP } from "../../utils/identity";
 
 import catMascot from "../../assets/mascot/happy.png";
 
@@ -25,7 +26,8 @@ function Onboarding() {
   const [step, setStep] = useState(1);
   const [profileData, setProfileData] = useState({
     username: "",
-    avatar: ""
+    avatar: "",
+    selectedAvatar: ""
   });
   const [localError, setLocalError] = useState("");
 
@@ -54,17 +56,24 @@ function Onboarding() {
   const handleFinish = async () => {
     setLocalError("");
     
-    if (!profileData.avatar && !googlePhoto) {
+    const finalAvatar = profileData.avatar || googlePhoto;
+    if (!finalAvatar) {
       setLocalError("Please select an avatar.");
       return;
     }
 
-    const finalAvatar = profileData.avatar || googlePhoto;
-    const isGoogleAvatar = finalAvatar === googlePhoto && !AVATAR_SRCS.includes(finalAvatar);
+    // Determine the final selectedAvatar ID using AVATAR_MAP
+    let finalSelectedAvatar = profileData.selectedAvatar;
+    if (!finalSelectedAvatar) {
+      finalSelectedAvatar = Object.keys(AVATAR_MAP).find(key => AVATAR_MAP[key] === finalAvatar) || (finalAvatar === googlePhoto ? "google" : "orange");
+    }
+
+    const isGoogleAvatar = finalSelectedAvatar === "google";
 
     const finalData = {
       ...profileData,
       avatar: finalAvatar,
+      selectedAvatar: finalSelectedAvatar,
       avatarType: isGoogleAvatar ? "google" : "custom",
       joinedDate: new Date().toISOString(),
       profileCompleted: true,
@@ -150,8 +159,8 @@ function Onboarding() {
                     <h3 className="text-xl font-bold text-gray-800">Step 2: Choose Avatar</h3>
                     <AvatarPicker 
                       googlePhotoUrl={googlePhoto}
-                      selectedAvatar={profileData.avatar || googlePhoto}
-                      onSelect={(avatar) => setProfileData({ ...profileData, avatar })}
+                      selectedAvatar={profileData.selectedAvatar || profileData.avatar || googlePhoto}
+                      onSelect={(avatarId, avatarSrc) => setProfileData({ ...profileData, avatar: avatarSrc, selectedAvatar: avatarId })}
                     />
                   </div>
                 )}

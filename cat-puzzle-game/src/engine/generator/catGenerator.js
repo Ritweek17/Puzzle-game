@@ -85,11 +85,14 @@ function solve(
   regions,
   index,
   cats,
-  random
+  random,
+  allSolutions
 ) {
+  if (allSolutions.length > 1) return;
 
   if (index >= regions.length) {
-    return true;
+    allSolutions.push([...cats]);
+    return;
   }
 
   const cells = shuffle(
@@ -98,7 +101,6 @@ function solve(
   );
 
   for (const cell of cells) {
-
     if (
       !canPlace(
         cats,
@@ -111,23 +113,16 @@ function solve(
 
     cats.push(cell);
 
-    if (
-      solve(
-        regions,
-        index + 1,
-        cats,
-        random
-      )
-    ) {
-      return true;
-    }
+    solve(
+      regions,
+      index + 1,
+      cats,
+      random,
+      allSolutions
+    );
 
     cats.pop();
-
   }
-
-  return false;
-
 }
 
 export function generateCats(
@@ -135,24 +130,39 @@ export function generateCats(
   random
 ) {
 
-  const grouped =
+  let grouped =
     groupCellsByRegion(regions);
 
-  const cats = [];
+  // Randomize region traversal order while keeping small regions generally first
+  const bySize = new Map();
+  for (const group of grouped) {
+    const len = group.length;
+    if (!bySize.has(len)) bySize.set(len, []);
+    bySize.get(len).push(group);
+  }
+  
+  grouped = [];
+  const sortedSizes = [...bySize.keys()].sort((a, b) => a - b);
+  for (const size of sortedSizes) {
+    const groups = bySize.get(size);
+    const shuffledGroups = shuffle(groups, random);
+    grouped.push(...shuffledGroups);
+  }
 
-  const solved = solve(
+  const cats = [];
+  const allSolutions = [];
+
+  solve(
     grouped,
     0,
     cats,
-    random
+    random,
+    allSolutions
   );
 
-  if (!solved) {
-
+  if (allSolutions.length === 0) {
     return [];
-
   }
 
-  return cats;
-
+  return allSolutions;
 }

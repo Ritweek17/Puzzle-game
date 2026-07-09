@@ -28,10 +28,18 @@ import {
   GoogleAuthProvider,
 
   signInWithPopup,
+  
+  signInWithRedirect,
+  
+  getRedirectResult,
 
   signOut,
 
   onAuthStateChanged,
+
+  setPersistence,
+
+  browserLocalPersistence,
 
 } from "firebase/auth";
 
@@ -48,14 +56,30 @@ const googleProvider = new GoogleAuthProvider();
  */
 
 export async function signInWithGoogle() {
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+    || (navigator.maxTouchPoints > 0 && /Macintosh/.test(navigator.userAgent));
 
-  const result = await signInWithPopup(
-    auth,
-    googleProvider
-  );
+  try {
+    // Before login, set local persistence so users remain logged in after refresh
+    await setPersistence(auth, browserLocalPersistence);
 
-  return result.user;
-
+    if (isMobile) {
+      // For mobile browsers like Android Chrome, use redirect to prevent popup blockers
+      await signInWithRedirect(auth, googleProvider);
+      return null; // Will be handled by getRedirectResult/onAuthStateChanged
+    } else {
+      // For desktop, use popup
+      const result = await signInWithPopup(
+        auth,
+        googleProvider
+      );
+    
+      return result.user;
+    }
+  } catch (error) {
+    console.error("Google Sign-In failed. Code:", error.code, "Message:", error.message);
+    throw error;
+  }
 }
 
 /**
@@ -90,4 +114,4 @@ export function listenToAuth(callback) {
 
 }
 
-export { auth };
+export { auth, getRedirectResult };

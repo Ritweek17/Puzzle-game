@@ -3,16 +3,17 @@ import { createTargetSizes } from "./targetSizes";
 import { growRegions } from "./growRegions";
 import { fillEmptyCells } from "./fillEmptyCells";
 
-export function generateRegions(board, regionCount, random) {
+export function generateRegions(board, cats, random) {
   const { regions, seeds } = placeSeeds(
     board,
-    regionCount,
+    cats,
     random
   );
 
   const targets = createTargetSizes(
     board.length,
-    regionCount
+    cats.length,
+    random
   );
 
   const grown = growRegions(

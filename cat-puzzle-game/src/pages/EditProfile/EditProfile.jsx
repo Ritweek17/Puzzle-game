@@ -4,7 +4,7 @@ import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useProfile } from "../../hooks/useProfile";
-import { resolveIdentity } from "../../utils/identity";
+import { resolveIdentity, AVATAR_MAP } from "../../utils/identity";
 import AvatarPicker from "../../components/AvatarPicker/AvatarPicker";
 import ProfileForm from "../../components/ProfileForm/ProfileForm";
 
@@ -28,6 +28,7 @@ export default function EditProfile() {
   const [editData, setEditData] = useState({
     username: "",
     avatar: "",
+    selectedAvatar: "",
     gender: "",
     ageGroup: ""
   });
@@ -40,6 +41,7 @@ export default function EditProfile() {
       setEditData({
         username: profile.username || "",
         avatar: profile.avatar || "",
+        selectedAvatar: profile.selectedAvatar || "",
         gender: profile.gender || "",
         ageGroup: profile.ageGroup || ""
       });
@@ -47,6 +49,7 @@ export default function EditProfile() {
       setEditData({
         username: user.displayName || "",
         avatar: user.photoURL || "",
+        selectedAvatar: user.photoURL ? "google" : "orange",
         gender: "",
         ageGroup: ""
       });
@@ -54,19 +57,27 @@ export default function EditProfile() {
   }, [profile, user]);
 
   const handleAvatarSelect = (avatarId, avatarUrl) => {
-    setEditData((prev) => ({ ...prev, avatar: avatarUrl }));
+    setEditData((prev) => ({ ...prev, avatar: avatarUrl, selectedAvatar: avatarId }));
   };
 
   const handleSave = async () => {
     setSuccessMsg("");
     
     const finalAvatar = editData.avatar || user.photoURL;
-    const isGoogleAvatar = finalAvatar === user.photoURL && !AVATAR_SRCS.includes(finalAvatar);
+    
+    // Determine the final selectedAvatar ID using AVATAR_MAP
+    let finalSelectedAvatar = editData.selectedAvatar;
+    if (!finalSelectedAvatar) {
+      finalSelectedAvatar = Object.keys(AVATAR_MAP).find(key => AVATAR_MAP[key] === finalAvatar) || (finalAvatar === user.photoURL ? "google" : "orange");
+    }
+
+    const isGoogleAvatar = finalSelectedAvatar === "google";
 
     // Pass existing profileCompleted and joinedDate so they aren't lost
     const finalData = {
       ...editData,
       avatar: finalAvatar,
+      selectedAvatar: finalSelectedAvatar,
       avatarType: isGoogleAvatar ? "google" : "custom",
       profileCompleted: profile?.profileCompleted ?? true,
       joinedDate: profile?.joinedDate || new Date().toISOString()

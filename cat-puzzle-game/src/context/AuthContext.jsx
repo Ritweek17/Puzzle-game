@@ -57,6 +57,7 @@ import {
   signOutFromFirebase,
   listenToAuth,
   auth,
+  getRedirectResult,
 
 } from "../firebase/auth";
 
@@ -175,7 +176,22 @@ export function AuthProvider({ children }) {
       const localProf = getLocalProfile();
 
       if (!snap.exists()) {
-        const mergedProfile = (localProf && localProf.profileCompleted) ? localProf : null;
+        let mergedProfile = (localProf && localProf.profileCompleted) ? { ...localProf } : {};
+        
+        if (!mergedProfile.username) {
+          mergedProfile.username = firebaseUser.displayName || "Player";
+        }
+        
+        if (!mergedProfile.selectedAvatar && !mergedProfile.avatar) {
+          if (firebaseUser.photoURL) {
+            mergedProfile.selectedAvatar = "google";
+            mergedProfile.googlePhoto = firebaseUser.photoURL;
+          } else {
+            mergedProfile.selectedAvatar = "orange";
+          }
+        }
+        
+        mergedProfile.profileCompleted = true;
         
         await setDoc(userRef, {
           uid: firebaseUser.uid,
@@ -197,9 +213,29 @@ export function AuthProvider({ children }) {
         const existingData = snap.data();
         
         // If the local user already had a completed profile, merge it to cloud
-        const mergedProfile = (localProf && localProf.profileCompleted) 
-          ? localProf 
-          : existingData.profile;
+        let mergedProfile = (localProf && localProf.profileCompleted) 
+          ? { ...localProf } 
+          : { ...existingData.profile };
+
+        if (!mergedProfile.username) {
+          mergedProfile.username = firebaseUser.displayName || existingData?.account?.googleName || "Player";
+        }
+
+        if (!mergedProfile.selectedAvatar && !mergedProfile.avatar) {
+          const googlePhoto = firebaseUser.photoURL || existingData?.account?.googlePhoto;
+          if (googlePhoto) {
+            mergedProfile.selectedAvatar = "google";
+            mergedProfile.googlePhoto = googlePhoto;
+          } else {
+            mergedProfile.selectedAvatar = "orange";
+          }
+        }
+
+        if (firebaseUser.photoURL) {
+          mergedProfile.googlePhoto = firebaseUser.photoURL;
+        }
+
+        mergedProfile.profileCompleted = true;
 
         await setDoc(userRef, {
           account: {
@@ -207,11 +243,11 @@ export function AuthProvider({ children }) {
             googleName: firebaseUser.displayName || existingData?.account?.googleName || "Anonymous",
             googlePhoto: firebaseUser.photoURL || existingData?.account?.googlePhoto || null
           },
-          profile: mergedProfile || null,
+          profile: mergedProfile,
           lastUpdated: serverTimestamp()
         }, { merge: true });
         
-        setPlayerProfile(mergedProfile || null);
+        setPlayerProfile(mergedProfile);
       }
     } catch (err) {
       console.error("Firestore user document creation failed:", err);
@@ -258,17 +294,59 @@ export function AuthProvider({ children }) {
    */
 
   useEffect(() => {
+    let unsubscribe = null;
+    let isMounted = true;
+    let redirectResolved = false;
+    let authStateResolved = false;
+    let firebaseUserObj = null;
+    let redirectUser = null;
 
-    const unsubscribe = listenToAuth(async (firebaseUser) => {
+    async function handleStartup() {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result && result.user && isMounted) {
+          console.log("Redirect login successful for:", result.user.email);
+          redirectUser = result.user;
+        }
+      } catch (error) {
+        console.error("Google Redirect login failed. Code:", error.code, "Message:", error.message);
+      } finally {
+        if (isMounted) {
+          redirectResolved = true;
+          if (authStateResolved) {
+            await finalizeAuth(firebaseUserObj);
+          }
+        }
+      }
+    }
 
-      if (firebaseUser) {
-        // Real Firebase user
-        setUser(firebaseUser);
-        await handleFirebaseLogin(firebaseUser);
+    async function finalizeAuth(fbUser) {
+      if (!isMounted) return;
+      
+      const userToUse = fbUser || redirectUser;
+
+      if (userToUse) {
+        setUser(userToUse);
+        await handleFirebaseLogin(userToUse);
+        
+        if (redirectUser) {
+          try {
+            const userRef = doc(db, "users", userToUse.uid);
+            const snap = await getDoc(userRef);
+            
+            if (!snap.exists() || (!snap.data().profile?.profileCompleted && !getLocalProfile())) {
+              navigate("/onboarding");
+            } else {
+              navigate("/");
+            }
+          } catch (e) {
+            console.error("Error checking onboarding status after redirect:", e);
+            navigate("/");
+          }
+        }
       } else {
         // Firebase says no user. Load Local Profile.
         const localProf = getLocalProfile();
-        
         setUser({ isGuest: true, uid: "guest" });
         setAuthUser(null);
 
@@ -278,17 +356,30 @@ export function AuthProvider({ children }) {
         } else {
           setPlayerProfile(null);
           setSyncStatus("idle");
-          navigate("/onboarding");
+          if (window.location.pathname !== "/onboarding") {
+            navigate("/onboarding");
+          }
         }
       }
-
       setLoading(false);
+    }
+
+    handleStartup();
+
+    unsubscribe = listenToAuth(async (fbUser) => {
+      if (!isMounted) return;
+      firebaseUserObj = fbUser;
+      authStateResolved = true;
+
+      if (redirectResolved) {
+        await finalizeAuth(fbUser);
+      }
     });
 
     return () => {
-      unsubscribe();
+      isMounted = false;
+      if (unsubscribe) unsubscribe();
     };
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -324,13 +415,13 @@ export function AuthProvider({ children }) {
   async function login() {
     try {
       const fbUser = await signInWithGoogle();
+      if (!fbUser) {
+        // Redirect flow in progress on mobile browser
+        return;
+      }
       
       const userRef = doc(db, "users", fbUser.uid);
       const snap = await getDoc(userRef);
-      
-      // If no profile exists AT ALL, we might need to onboard, but the prompt says:
-      // "Google Login becomes Link Google Account. Merge Local Profile -> Firestore"
-      // If we are here, we already have a local profile. handleFirebaseLogin takes care of merging it.
       
       if (!snap.exists() || (!snap.data().profile?.profileCompleted && !getLocalProfile())) {
         navigate("/onboarding");
@@ -338,7 +429,7 @@ export function AuthProvider({ children }) {
         navigate("/");
       }
     } catch (error) {
-      console.error("Google login failed:", error);
+      console.error("Google login failed. Code:", error?.code, "Message:", error?.message);
       throw error;
     }
   }
