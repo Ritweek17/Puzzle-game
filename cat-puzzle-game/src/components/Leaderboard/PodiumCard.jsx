@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { resolveIdentity } from "../../utils/identity";
+import { resolveIdentity, DEFAULT_AVATAR_URL } from "../../utils/identity";
 
 function PodiumCard({ player, rank }) {
   if (!player) return <div className="flex-1" />;
@@ -34,6 +34,10 @@ function PodiumCard({ player, rank }) {
             rounded-full object-cover border-4 border-white shadow-xl bg-white
             ${isFirst ? "w-24 h-24" : "w-20 h-20"}
           `}
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = DEFAULT_AVATAR_URL;
+          }}
         />
         <div className={`
           absolute -bottom-2 left-1/2 -translate-x-1/2

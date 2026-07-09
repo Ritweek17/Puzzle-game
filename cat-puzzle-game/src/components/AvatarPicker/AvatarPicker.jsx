@@ -55,6 +55,10 @@ function AvatarPicker({ selectedAvatar, onSelect, googlePhotoUrl }) {
               src={avatar.src} 
               alt={avatar.name} 
               className="w-full h-full object-cover bg-white"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = orange;
+              }}
             />
           </motion.div>
         ))}

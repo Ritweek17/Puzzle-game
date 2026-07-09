@@ -18,15 +18,20 @@ export const AVATAR_MAP = {
   cute
 };
 
+export const DEFAULT_AVATAR_URL = orange;
+
 export function resolveIdentity(playerProfile, firebaseUser = null) {
-  const displayName = playerProfile?.username || firebaseUser?.displayName || "Guest Player";
+  const googleDisplayName = firebaseUser?.displayName || firebaseUser?.account?.googleName;
+  const googlePhoto = firebaseUser?.photoURL || firebaseUser?.account?.googlePhoto || playerProfile?.googlePhoto;
+
+  const displayName = playerProfile?.username || googleDisplayName || "Guest Player";
 
   // 1. Custom selected game avatar (ID like "orange", or a full URL/path if legacy)
   const selectedAvatar = playerProfile?.selectedAvatar;
   let customAvatarUrl = null;
   if (selectedAvatar) {
     if (selectedAvatar === "google") {
-      customAvatarUrl = firebaseUser?.photoURL || playerProfile?.googlePhoto;
+      customAvatarUrl = googlePhoto;
     } else {
       customAvatarUrl = AVATAR_MAP[selectedAvatar] || selectedAvatar;
     }
@@ -37,17 +42,17 @@ export function resolveIdentity(playerProfile, firebaseUser = null) {
   let legacyAvatarUrl = null;
   if (legacyAvatar) {
     if (legacyAvatar === "google") {
-      legacyAvatarUrl = firebaseUser?.photoURL || playerProfile?.googlePhoto;
+      legacyAvatarUrl = googlePhoto;
     } else {
       legacyAvatarUrl = AVATAR_MAP[legacyAvatar] || legacyAvatar;
     }
   }
 
   // 3. Google photo
-  const googlePhotoUrl = firebaseUser?.photoURL || playerProfile?.googlePhoto;
+  const googlePhotoUrl = googlePhoto || null;
 
   // 4. Default avatar
-  const defaultAvatarUrl = orange; // orange cat
+  const defaultAvatarUrl = DEFAULT_AVATAR_URL;
 
   // Apply Priority: Custom selected -> Previously saved -> Google photo -> Default
   const avatarUrl = customAvatarUrl || legacyAvatarUrl || googlePhotoUrl || defaultAvatarUrl;

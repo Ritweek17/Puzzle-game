@@ -53,7 +53,7 @@ import { useNavigate } from "react-router-dom";
 
 import {
 
-  signInWithGoogle,
+  loginWithGoogle,
   signOutFromFirebase,
   listenToAuth,
   auth,
@@ -182,10 +182,13 @@ export function AuthProvider({ children }) {
           mergedProfile.username = firebaseUser.displayName || "Player";
         }
         
+        if (firebaseUser.photoURL) {
+          mergedProfile.googlePhoto = firebaseUser.photoURL;
+        }
+
         if (!mergedProfile.selectedAvatar && !mergedProfile.avatar) {
           if (firebaseUser.photoURL) {
             mergedProfile.selectedAvatar = "google";
-            mergedProfile.googlePhoto = firebaseUser.photoURL;
           } else {
             mergedProfile.selectedAvatar = "orange";
           }
@@ -221,18 +224,17 @@ export function AuthProvider({ children }) {
           mergedProfile.username = firebaseUser.displayName || existingData?.account?.googleName || "Player";
         }
 
+        if (firebaseUser.photoURL) {
+          mergedProfile.googlePhoto = firebaseUser.photoURL;
+        }
+
         if (!mergedProfile.selectedAvatar && !mergedProfile.avatar) {
           const googlePhoto = firebaseUser.photoURL || existingData?.account?.googlePhoto;
           if (googlePhoto) {
             mergedProfile.selectedAvatar = "google";
-            mergedProfile.googlePhoto = googlePhoto;
           } else {
             mergedProfile.selectedAvatar = "orange";
           }
-        }
-
-        if (firebaseUser.photoURL) {
-          mergedProfile.googlePhoto = firebaseUser.photoURL;
         }
 
         mergedProfile.profileCompleted = true;
@@ -301,7 +303,19 @@ export function AuthProvider({ children }) {
     let firebaseUserObj = null;
     let redirectUser = null;
 
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
     async function handleStartup() {
+      // REDIRECT HANDLING: ONLY run getRedirectResult(auth) to process mobile returns.
+      // Do not block desktop auth.
+      if (!isMobile) {
+        redirectResolved = true;
+        if (authStateResolved) {
+          await finalizeAuth(firebaseUserObj);
+        }
+        return;
+      }
+
       try {
         const result = await getRedirectResult(auth);
         if (result && result.user && isMounted) {
@@ -368,6 +382,13 @@ export function AuthProvider({ children }) {
 
     unsubscribe = listenToAuth(async (fbUser) => {
       if (!isMounted) return;
+      if (fbUser) {
+        console.log("Firebase Auth User state changed:", {
+          uid: fbUser.uid,
+          email: fbUser.email,
+          photoURL: fbUser.photoURL
+        });
+      }
       firebaseUserObj = fbUser;
       authStateResolved = true;
 
@@ -414,7 +435,7 @@ export function AuthProvider({ children }) {
 
   async function login() {
     try {
-      const fbUser = await signInWithGoogle();
+      const fbUser = await loginWithGoogle();
       if (!fbUser) {
         // Redirect flow in progress on mobile browser
         return;

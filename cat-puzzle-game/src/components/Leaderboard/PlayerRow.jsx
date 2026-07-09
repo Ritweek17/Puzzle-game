@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { resolveIdentity } from "../../utils/identity";
+import { resolveIdentity, DEFAULT_AVATAR_URL } from "../../utils/identity";
 import { useEffect, useRef } from "react";
 
 function PlayerRow({ player, rank, isCurrentPlayer }) {
@@ -32,6 +32,10 @@ function PlayerRow({ player, rank, isCurrentPlayer }) {
           src={avatarUrl}
           alt={displayName}
           className="w-12 h-12 rounded-full border-2 border-white shadow-sm object-cover bg-white"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = DEFAULT_AVATAR_URL;
+          }}
         />
         <div className="flex flex-col">
           <div className="font-bold text-gray-800 flex items-center gap-2">

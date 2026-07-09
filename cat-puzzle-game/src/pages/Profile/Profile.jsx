@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
 import { fetchLeaderboard } from "../../services/leaderboardService";
 import { getProgress } from "../../utils/progress";
-import { resolveIdentity } from "../../utils/identity";
+import { resolveIdentity, DEFAULT_AVATAR_URL } from "../../utils/identity";
 
 import BackgroundDecoration from "../../components/BackgroundDecoration/BackgroundDecoration";
 
@@ -113,6 +113,10 @@ export default function ProfilePage() {
                   src={avatarUrl}
                   alt={displayName}
                   className="w-28 h-28 rounded-[2rem] border-4 border-white shadow-xl object-cover bg-white mb-4"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = DEFAULT_AVATAR_URL;
+                  }}
                 />
                 <h2 className="text-2xl font-extrabold text-gray-800 tracking-tight">{displayName}</h2>
                 

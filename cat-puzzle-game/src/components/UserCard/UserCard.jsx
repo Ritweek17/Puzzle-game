@@ -17,7 +17,7 @@
 
 import { LogOut } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
-import { resolveIdentity } from "../../utils/identity";
+import { resolveIdentity, DEFAULT_AVATAR_URL } from "../../utils/identity";
 
 function UserCard() {
 
@@ -66,6 +66,11 @@ function UserCard() {
         alt={displayName}
 
         className="w-12 h-12 rounded-full object-cover flex-shrink-0 bg-white shadow-sm ring-2 ring-purple-100"
+
+        onError={(e) => {
+          e.target.onerror = null;
+          e.target.src = DEFAULT_AVATAR_URL;
+        }}
 
       />
 

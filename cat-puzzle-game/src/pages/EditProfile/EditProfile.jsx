@@ -4,7 +4,7 @@ import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useProfile } from "../../hooks/useProfile";
-import { resolveIdentity, AVATAR_MAP } from "../../utils/identity";
+import { resolveIdentity, AVATAR_MAP, DEFAULT_AVATAR_URL } from "../../utils/identity";
 import AvatarPicker from "../../components/AvatarPicker/AvatarPicker";
 import ProfileForm from "../../components/ProfileForm/ProfileForm";
 
@@ -120,6 +120,10 @@ export default function EditProfile() {
               src={editData.avatar || resolveIdentity(profile, user).avatarUrl}
               alt="Avatar preview"
               className="w-24 h-24 rounded-full object-cover shadow-lg border-4 border-white mb-4 bg-white"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = DEFAULT_AVATAR_URL;
+              }}
             />
             <div className="flex flex-col text-center">
               <span className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-1">

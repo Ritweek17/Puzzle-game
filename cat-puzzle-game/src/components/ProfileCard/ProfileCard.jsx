@@ -37,7 +37,7 @@ import {
   UserCircle,
   Pencil
 } from "lucide-react";
-import { resolveIdentity } from "../../utils/identity";
+import { resolveIdentity, DEFAULT_AVATAR_URL } from "../../utils/identity";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -207,6 +207,10 @@ function GuestCard({ user, playerProfile, onGoogleLogin, googleLoading, error })
                 flex-shrink-0 shadow-md bg-white
                 ring-2 ring-purple-100 ring-offset-2
               "
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = DEFAULT_AVATAR_URL;
+              }}
             />
           ) : (
             <div
@@ -349,6 +353,10 @@ function LoggedInCard({ user, playerProfile, syncStatus, lastSynced, onLogout, l
                 flex-shrink-0 shadow-md bg-white
                 ring-2 ring-purple-200 ring-offset-2
               "
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = DEFAULT_AVATAR_URL;
+              }}
             />
           ) : (
             <div

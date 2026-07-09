@@ -47,6 +47,15 @@ import app from "./config";
 
 const auth = getAuth(app);
 
+// Initialize persistence globally at startup
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log("Firebase Auth persistence initialized to local.");
+  })
+  .catch((err) => {
+    console.error("Firebase Auth persistence failed to initialize:", err);
+  });
+
 const googleProvider = new GoogleAuthProvider();
 
 /**
@@ -55,16 +64,15 @@ const googleProvider = new GoogleAuthProvider();
  * -----------------------------------
  */
 
-export async function signInWithGoogle() {
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-    || (navigator.maxTouchPoints > 0 && /Macintosh/.test(navigator.userAgent));
+export async function loginWithGoogle() {
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   try {
     // Before login, set local persistence so users remain logged in after refresh
     await setPersistence(auth, browserLocalPersistence);
 
     if (isMobile) {
-      // For mobile browsers like Android Chrome, use redirect to prevent popup blockers
+      // For mobile browsers, use redirect to prevent popup blockers
       await signInWithRedirect(auth, googleProvider);
       return null; // Will be handled by getRedirectResult/onAuthStateChanged
     } else {
@@ -81,6 +89,8 @@ export async function signInWithGoogle() {
     throw error;
   }
 }
+
+export const signInWithGoogle = loginWithGoogle;
 
 /**
  * -----------------------------------
