@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 
 import Home from "./pages/Home/Home";
 import Levels from "./pages/Levels/Levels";
@@ -13,6 +14,16 @@ import Onboarding from "./pages/Onboarding/Onboarding";
 import EditProfile from "./pages/EditProfile/EditProfile";
 
 function App() {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#FFF8EE] via-[#F8F5FF] to-[#EAFDFC]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#7C5CFF]"></div>
+      </div>
+    );
+  }
+
   return (
     <Routes>
       <Route path="/" element={<Home />} />
