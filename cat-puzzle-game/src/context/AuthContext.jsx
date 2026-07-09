@@ -330,8 +330,8 @@ export function AuthProvider({ children }) {
     let isMounted = true;
 
     async function initializeAuthentication() {
-      console.log("[AUTH] APP START");
-      console.log("[AUTH] AUTH RESTORING");
+      console.log("APP START");
+      console.log("AUTH CHECKING");
 
       let finalUser = null;
 
@@ -341,11 +341,11 @@ export function AuthProvider({ children }) {
         try {
           const result = await getRedirectResult(auth);
           if (result && result.user) {
-            console.log("[AUTH] REDIRECT RESULT RECEIVED:", result.user.email);
+            console.log("REDIRECT RESULT RECEIVED:", result.user.email);
             finalUser = result.user;
           }
         } catch (error) {
-          console.error("[AUTH] Redirect result failed:", error);
+          console.error("Redirect result failed:", error);
         }
       }
 
@@ -359,20 +359,21 @@ export function AuthProvider({ children }) {
         });
 
         if (persistentUser) {
-          console.log("[AUTH] AUTH USER FOUND:", persistentUser.email);
           finalUser = persistentUser;
         }
       } catch (error) {
-        console.error("[AUTH] Persistent auth lookup failed:", error);
+        console.error("Persistent auth lookup failed:", error);
       }
+
+      console.log("AUTH READY");
 
       // 3. Process the resolved user (either Google user or Guest).
       if (isMounted) {
         if (finalUser) {
-          console.log("[AUTH] PLAYER LOADING for UID:", finalUser.uid);
+          console.log("AUTH USER FOUND");
           setUser(finalUser);
           await handleFirebaseLogin(finalUser);
-          console.log("[AUTH] PLAYER LOADED");
+          console.log("PLAYER LOADED");
           
           if (isMobile) {
             try {
@@ -385,12 +386,11 @@ export function AuthProvider({ children }) {
                 navigate("/levels");
               }
             } catch (e) {
-              console.error("[AUTH] Error checking onboarding status after redirect:", e);
+              console.error("Error checking onboarding status after redirect:", e);
               navigate("/levels");
             }
           }
         } else {
-          console.log("[AUTH] NO USER FOUND, CREATING/LOADING GUEST");
           const localProf = getLocalProfile();
           setUser({ isGuest: true, uid: "guest" });
           setAuthUser(null);
@@ -398,31 +398,39 @@ export function AuthProvider({ children }) {
           if (localProf && localProf.profileCompleted) {
             setPlayerProfile(localProf);
             setSyncStatus("offline");
-            console.log("[AUTH] GUEST LOADED (offline)");
           } else {
             setPlayerProfile(null);
             setSyncStatus("idle");
-            console.log("[AUTH] GUEST CREATED");
             if (window.location.pathname !== "/onboarding") {
               navigate("/onboarding");
             }
           }
+          console.log("GUEST CREATED");
         }
 
         // 4. Set loading to false only after everything is fully loaded and initialized!
         setLoading(false);
-        console.log("[AUTH] AUTH INITIALIZATION COMPLETED");
       }
 
       // 5. Register the long-running auth listener to handle subsequent logins, logouts, etc.
       if (isMounted) {
         unsubscribe = listenToAuth(async (currentUser) => {
           if (!isMounted) return;
-          console.log("[AUTH] Auth state listener triggered:", currentUser?.email || "No User");
+          console.log("Auth state listener triggered:", currentUser?.email || "No User");
           
           if (currentUser) {
-            setUser(currentUser);
-            await handleFirebaseLogin(currentUser);
+            let alreadyLoggedIn = false;
+            setUser((prev) => {
+              if (prev && prev.uid === currentUser.uid && !prev.isGuest) {
+                alreadyLoggedIn = true;
+                return prev;
+              }
+              return currentUser;
+            });
+            
+            if (!alreadyLoggedIn) {
+              await handleFirebaseLogin(currentUser);
+            }
           } else {
             setUser((prev) => {
               if (prev && !prev.isGuest) {
@@ -481,6 +489,12 @@ export function AuthProvider({ children }) {
    */
 
   async function login() {
+    console.log("LOGIN START");
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (!isMobile) {
+      console.log("POPUP OPEN");
+    }
+
     try {
       const fbUser = await loginWithGoogle();
       if (!fbUser) {
@@ -488,6 +502,13 @@ export function AuthProvider({ children }) {
         return;
       }
       
+      console.log("GOOGLE SUCCESS");
+      console.log("AUTH USER FOUND");
+      
+      setUser(fbUser);
+      await handleFirebaseLogin(fbUser);
+      console.log("PLAYER LOADED");
+
       const userRef = doc(db, "users", fbUser.uid);
       const snap = await getDoc(userRef);
       

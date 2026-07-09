@@ -68,9 +68,6 @@ export async function loginWithGoogle() {
   const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   try {
-    // Before login, set local persistence so users remain logged in after refresh
-    await setPersistence(auth, browserLocalPersistence);
-
     if (isMobile) {
       // For mobile browsers, use redirect to prevent popup blockers
       await signInWithRedirect(auth, googleProvider);
