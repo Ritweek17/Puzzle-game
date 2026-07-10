@@ -9,8 +9,24 @@ export async function updatePlayerProfile(uid, profileData) {
   if (!uid) throw new Error("Cannot update profile without a valid UID.");
   
   const userRef = doc(db, "users", uid);
+  const publicRef = doc(db, "publicProfiles", uid);
+
+  let currentLevel = 1;
+  let completedLevels = 0;
+  let totalStars = 0;
+
+  try {
+    const snap = await getDoc(userRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      currentLevel = data.currentLevel || 1;
+      completedLevels = data.completedLevels || 0;
+      totalStars = data.totalStars || 0;
+    }
+  } catch (err) {
+    console.warn("Failed to fetch user stats for public profile:", err);
+  }
   
-  // Data to merge into the profile field
   const updateData = {
     profile: {
       ...profileData,
@@ -18,8 +34,25 @@ export async function updatePlayerProfile(uid, profileData) {
     lastUpdated: serverTimestamp()
   };
 
+  const publicData = {
+    uid: uid,
+    displayName: profileData.username,
+    photoURL: profileData.avatar || null,
+    currentLevel,
+    completedLevels,
+    totalStars,
+    profile: {
+      username: profileData.username,
+      avatar: profileData.avatar || null,
+      selectedAvatar: profileData.selectedAvatar || "orange"
+    },
+    lastUpdated: serverTimestamp(),
+    guest: false
+  };
+
   try {
     await setDoc(userRef, updateData, { merge: true });
+    await setDoc(publicRef, publicData, { merge: true });
     return true;
   } catch (error) {
     console.error("[profileService] updatePlayerProfile failed:", error);

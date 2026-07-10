@@ -42,12 +42,12 @@
  */
 
 import {
-
   createContext,
   useContext,
   useEffect,
   useState,
-
+  useMemo,
+  useCallback,
 } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -161,7 +161,7 @@ export function AuthProvider({ children }) {
    * -----------------------------------
    */
 
-  async function handleFirebaseLogin(firebaseUser) {
+  const handleFirebaseLogin = useCallback(async (firebaseUser) => {
 
     // 1. Register uid — future completeLevel() calls will upload.
     setAuthUser(firebaseUser.uid);
@@ -184,7 +184,7 @@ export function AuthProvider({ children }) {
         delete mergedProfile.isGuest;
         delete mergedProfile.uid;
         
-        if (!mergedProfile.username) {
+        if (!mergedProfile.username || mergedProfile.username === "Guest" || mergedProfile.username === "Guest Player") {
           mergedProfile.username = firebaseUser.displayName || "Player";
         }
         
@@ -217,6 +217,25 @@ export function AuthProvider({ children }) {
           createdAt: serverTimestamp(),
           lastUpdated: serverTimestamp()
         });
+
+        // Sync with public profile
+        const publicRef = doc(db, "publicProfiles", firebaseUser.uid);
+        await setDoc(publicRef, {
+          uid: firebaseUser.uid,
+          displayName: mergedProfile.username,
+          photoURL: mergedProfile.avatar || null,
+          completedLevels: 0,
+          totalStars: 0,
+          currentLevel: 1,
+          profile: {
+            username: mergedProfile.username,
+            avatar: mergedProfile.avatar || null,
+            selectedAvatar: mergedProfile.selectedAvatar || "orange"
+          },
+          lastUpdated: serverTimestamp(),
+          guest: false
+        });
+
         setPlayerProfile(mergedProfile);
 
         if (shouldMigrate) {
@@ -229,18 +248,48 @@ export function AuthProvider({ children }) {
         let mergedProfile;
         if (shouldMigrate) {
           // Merge local guest profile with firestore profile
-          // Priority for username: custom guest username > firestore username > google displayName
           mergedProfile = { ...firestoreProfile };
           
-          if (localProf.username && localProf.username !== "Guest" && localProf.username !== "Guest Player") {
-            mergedProfile.username = localProf.username;
-          }
+          const isCloudMature = firestoreProfile.profileCompleted === true || (firestoreProfile.username && firestoreProfile.username !== "Guest" && firestoreProfile.username !== "Guest Player" && firestoreProfile.username !== "Player");
           
-          if (localProf.selectedAvatar && localProf.selectedAvatar !== "google") {
-            mergedProfile.selectedAvatar = localProf.selectedAvatar;
+          if (isCloudMature) {
+            // Existing cloud profile wins. Only fill missing fields from guest data.
+            if (!mergedProfile.username && localProf.username && localProf.username !== "Guest" && localProf.username !== "Guest Player") {
+              mergedProfile.username = localProf.username;
+            }
+            if (!mergedProfile.selectedAvatar && localProf.selectedAvatar && localProf.selectedAvatar !== "google") {
+              mergedProfile.selectedAvatar = localProf.selectedAvatar;
+            }
+            if (!mergedProfile.avatar && localProf.avatar) {
+              mergedProfile.avatar = localProf.avatar;
+            }
+            if (!mergedProfile.gender && localProf.gender) {
+              mergedProfile.gender = localProf.gender;
+            }
+            if (!mergedProfile.ageGroup && localProf.ageGroup) {
+              mergedProfile.ageGroup = localProf.ageGroup;
+            }
+          } else {
+            // Cloud profile is fresh or not mature. Guest data wins!
+            if (localProf.username && localProf.username !== "Guest" && localProf.username !== "Guest Player") {
+              mergedProfile.username = localProf.username;
+            }
+            if (localProf.selectedAvatar && localProf.selectedAvatar !== "google") {
+              mergedProfile.selectedAvatar = localProf.selectedAvatar;
+            }
+            if (localProf.avatar) {
+              mergedProfile.avatar = localProf.avatar;
+            }
+            if (localProf.gender) {
+              mergedProfile.gender = localProf.gender;
+            }
+            if (localProf.ageGroup) {
+              mergedProfile.ageGroup = localProf.ageGroup;
+            }
           }
-          if (localProf.avatar) {
-            mergedProfile.avatar = localProf.avatar;
+
+          if (localProf.joinedDate && !mergedProfile.joinedDate) {
+            mergedProfile.joinedDate = localProf.joinedDate;
           }
           
           // Clear local profile after migration
@@ -277,6 +326,24 @@ export function AuthProvider({ children }) {
           },
           profile: mergedProfile,
           lastUpdated: serverTimestamp()
+        }, { merge: true });
+
+        // Sync with public profile
+        const publicRef = doc(db, "publicProfiles", firebaseUser.uid);
+        await setDoc(publicRef, {
+          uid: firebaseUser.uid,
+          displayName: mergedProfile.username,
+          photoURL: mergedProfile.avatar || null,
+          completedLevels: existingData.completedLevels || 0,
+          totalStars: existingData.totalStars || 0,
+          currentLevel: existingData.currentLevel || 1,
+          profile: {
+            username: mergedProfile.username,
+            avatar: mergedProfile.avatar || null,
+            selectedAvatar: mergedProfile.selectedAvatar || "orange"
+          },
+          lastUpdated: serverTimestamp(),
+          guest: false
         }, { merge: true });
         
         setPlayerProfile(mergedProfile);
@@ -317,7 +384,7 @@ export function AuthProvider({ children }) {
 
     }
 
-  }
+  }, []);
 
   /**
    * -----------------------------------
@@ -488,7 +555,7 @@ export function AuthProvider({ children }) {
    * -----------------------------------
    */
 
-  async function login() {
+  const login = useCallback(async () => {
     console.log("LOGIN START");
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!isMobile) {
@@ -521,7 +588,7 @@ export function AuthProvider({ children }) {
       console.error("Google login failed. Code:", error?.code, "Message:", error?.message);
       throw error;
     }
-  }
+  }, [navigate, handleFirebaseLogin]);
 
   /**
    * -----------------------------------
@@ -532,7 +599,7 @@ export function AuthProvider({ children }) {
    * -----------------------------------
    */
 
-  function loginAsGuest() {
+  const loginAsGuest = useCallback(() => {
 
     // Explicitly ensure uid is NOT registered for guests.
     setAuthUser(null);
@@ -543,7 +610,7 @@ export function AuthProvider({ children }) {
     setPlayerProfile(null);
     setUser(GUEST_USER);
 
-  }
+  }, []);
 
   /**
    * -----------------------------------
@@ -553,7 +620,7 @@ export function AuthProvider({ children }) {
    * -----------------------------------
    */
 
-  async function logout() {
+  const logout = useCallback(async () => {
     try {
       if (user && !user.isGuest) {
         await signOutFromFirebase();
@@ -572,9 +639,9 @@ export function AuthProvider({ children }) {
       console.error("Logout failed:", error);
       throw error;
     }
-  }
+  }, [user, playerProfile]);
 
-  const value = {
+  const value = useMemo(() => ({
 
     user,
     playerProfile,
@@ -591,7 +658,16 @@ export function AuthProvider({ children }) {
 
     lastSynced,
 
-  };
+  }), [
+    user,
+    playerProfile,
+    loading,
+    login,
+    loginAsGuest,
+    logout,
+    syncStatus,
+    lastSynced
+  ]);
 
   return (
 

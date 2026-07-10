@@ -3,11 +3,83 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>cat-puzzle-game</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="theme-color" content="#7C5CFF" />
+    
+    <!-- Primary SEO Metadata -->
+    <title>MeowMaze - Daily Cat Logic Puzzle Game</title>
+    <meta name="description" content="Challenge your brain with MeowMaze. Solve unique cat logic puzzles, progress through levels, and master increasingly difficult challenges." />
+    <meta name="keywords" content="MeowMaze, cat puzzle, logic puzzle, brain game, daily puzzle, strategy game, Queens puzzle, Star Battle puzzle" />
+    <meta name="author" content="MeowMaze Team" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://meowmaze.vercel.app" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://meowmaze.vercel.app" />
+    <meta property="og:title" content="MeowMaze 🐱 - Daily Logic Puzzle Challenge" />
+    <meta property="og:description" content="Solve clever cat puzzles with unique levels, relaxing gameplay, and strategic challenges." />
+    <meta property="og:image" content="https://meowmaze.vercel.app/og-image.png" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://meowmaze.vercel.app" />
+    <meta name="twitter:title" content="MeowMaze 🐱 - Daily Logic Puzzle Challenge" />
+    <meta name="twitter:description" content="Solve clever cat puzzles with unique levels, relaxing gameplay, and strategic challenges." />
+    <meta name="twitter:image" content="https://meowmaze.vercel.app/og-image.png" />
+
+    <!-- iOS / Mobile Optimizations -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="MeowMaze" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- Structured Data (Schema.org JSON-LD) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "VideoGame",
+        "name": "MeowMaze",
+        "description": "MeowMaze is a relaxing yet challenging cat-themed logic puzzle game. Players solve strategic puzzles by placing cats following region, row, column, and adjacency constraints.",
+        "genre": [
+          "Puzzle",
+          "Logic Puzzle",
+          "Brain Training Game"
+        ],
+        "playMode": "SinglePlayer",
+        "applicationCategory": "Game",
+        "operatingSystem": "Any",
+        "gamePlatform": "Web Browser",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((reg) => {
+              console.log('[Service Worker] Registered successfully with scope:', reg.scope);
+            })
+            .catch((err) => {
+              console.error('[Service Worker] Registration failed:', err);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

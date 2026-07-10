@@ -14,6 +14,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { generatePuzzle } from "../engine/generator";
+import { validatePuzzle } from "../engine/validator";
 import createPlayerBoard from "../utils/createPlayerBoard";
 import { playSound } from "../utils/sound";
 
@@ -131,7 +132,7 @@ const [history, setHistory] =
    */
 
   const totalCats =
-    puzzle.cats.length;
+    puzzle.gridSize;
 
   /**
    * -----------------------------------
@@ -141,6 +142,8 @@ const [history, setHistory] =
    */
 
   useEffect(() => {
+
+    console.log("puzzle.cats:", puzzle.cats);
 
     setPlayerBoard(
 
@@ -239,11 +242,23 @@ function getHiddenCats() {
 
     const cell = playerBoard[cat.row][cat.col];
 
-    return !cell.revealed;
+    return cell.state !== CELL_STATE.REVEALED;
 
   });
 
 }
+
+  /**
+   * -----------------------------------
+   * Get Unplaced Solution Cats
+   * -----------------------------------
+   */
+  function getUnplacedSolutionCats() {
+    return puzzle.cats.filter((cat) => {
+      const cell = playerBoard[cat.row][cat.col];
+      return cell.state !== CELL_STATE.REVEALED;
+    });
+  }
 
   /**
    * -----------------------------------
@@ -314,31 +329,39 @@ function saveHistory() {
    * -----------------------------------
    */
 
-  function checkWin(foundCatsCount) {
+  function checkWin() {
 
-    if (foundCatsCount >= totalCats) {
+    const placedCats = [];
+
+    playerBoard.forEach((r) =>
+
+      r.forEach((c) => {
+
+        if (c.state === CELL_STATE.REVEALED) {
+
+          placedCats.push({ row: c.row, col: c.col });
+
+        }
+
+      })
+
+    );
+
+    const isWon =
+
+      placedCats.length === puzzle.gridSize &&
+
+      validatePuzzle({
+
+        ...puzzle,
+
+        cats: placedCats,
+
+      }).valid;
+
+    if (isWon) {
 
       setCompleted(true);
-
-      return true;
-
-    }
-
-    return false;
-
-  }
-
-  /**
-   * -----------------------------------
-   * Check Game Over
-   * -----------------------------------
-   */
-
-  function checkGameOver(nextLives) {
-
-    if (nextLives <= 0) {
-
-      setGameOver(true);
 
       return true;
 
@@ -378,20 +401,6 @@ function saveHistory() {
 
   /**
    * -----------------------------------
-   * Reveal Wrong Cell
-   * -----------------------------------
-   */
-
-  function revealWrong(cell) {
-
-    cell.state = CELL_STATE.EXPLODED;
-
-    lockCell(cell);
-
-  }
-
-  /**
-   * -----------------------------------
    * Single Click Gameplay
    *
    * EMPTY
@@ -412,82 +421,67 @@ function handleCellClick(row, col) {
 
   if (completed || gameOver) return;
 
-  saveHistory();
+  const cell = playerBoard[row][col];
 
-  const board = cloneBoard();
-
-  const cell = board[row][col];
-
-  if (cell.locked) return;
-
-  if (cell.revealed) return;
-
-  /**
-   * First Click
-   */
-
-  if (cell.state === CELL_STATE.EMPTY) {
-
-    // 🔊 Click Sound
-    playSound("click");
-
-    cell.state = CELL_STATE.CROSS;
-
-    setPlayerBoard(board);
+  // Ignore clicks on already solved (cat/boom) or locked cells
+  if (cell.state === CELL_STATE.REVEALED || cell.state === CELL_STATE.EXPLODED) {
 
     return;
 
   }
 
-  /**
-   * Second Click
-   */
+  if (cell.locked) return;
 
-  if (cell.state === CELL_STATE.CROSS) {
+  saveHistory();
 
-    /**
-     * Correct Cell
-     */
+  const board = cloneBoard();
 
-    if (hasHiddenCat(row, col)) {
+  const targetCell = board[row][col];
 
-      // 🔊 Correct Sound
+  // EMPTY click -> CROSS
+  if (targetCell.state === CELL_STATE.EMPTY) {
+
+    playSound("click");
+
+    targetCell.state = CELL_STATE.CROSS;
+
+  } 
+  // CROSS click -> Solution Check
+  else if (targetCell.state === CELL_STATE.CROSS) {
+
+    const isCorrect = puzzle.cats.some(
+
+      (cat) => cat.row === row && cat.col === col
+
+    );
+
+    if (isCorrect) {
+
       playSound("correct");
 
-      revealCorrect(cell);
+      targetCell.state = CELL_STATE.REVEALED;
 
-      const nextFound =
-        foundCats + 1;
+      targetCell.locked = true;
 
-      setFoundCats(nextFound);
+      targetCell.revealed = true;
 
-      checkWin(nextFound);
+    } else {
 
-    }
-
-    /**
-     * Wrong Cell
-     */
-
-    else {
-
-      // 🔊 Wrong Sound
       playSound("wrong");
 
-      revealWrong(cell);
+      targetCell.state = CELL_STATE.EXPLODED;
 
-      const nextLives =
-        lives - 1;
+      targetCell.locked = true;
+
+      targetCell.revealed = true;
+
+      const nextLives = lives - 1;
 
       setLives(nextLives);
 
-      setWrongClicks(
+      setWrongClicks((prev) => prev + 1);
 
-        (prev) => prev + 1
-
-      );
-
-      // 📳 Shake Board
+      // Shake board on incorrect guess
       setShakeBoard(true);
 
       setTimeout(() => {
@@ -496,11 +490,41 @@ function handleCellClick(row, col) {
 
       }, 350);
 
-      checkGameOver(nextLives);
+      if (nextLives <= 0) {
+
+        setGameOver(true);
+
+      }
 
     }
 
-    setPlayerBoard(board);
+  }
+
+  setPlayerBoard(board);
+
+  // Recalculate found cats from board state
+  let nextFound = 0;
+
+  board.forEach((r) =>
+
+    r.forEach((c) => {
+
+      if (c.state === CELL_STATE.REVEALED) {
+
+        nextFound++;
+
+      }
+
+    })
+
+  );
+
+  setFoundCats(nextFound);
+
+  // Level complete only when all generated solution cats are found
+  if (nextFound === puzzle.cats.length) {
+
+    setCompleted(true);
 
   }
 
@@ -586,30 +610,31 @@ function useHint() {
   
   saveHistory();
 
-  const hiddenCats = getHiddenCats();
+  const unplacedCats = getUnplacedSolutionCats();
 
-  if (hiddenCats.length === 0) return;
+  if (unplacedCats.length === 0) return;
 
   const randomCat =
-    hiddenCats[
+
+    unplacedCats[
+
       Math.floor(
-        Math.random() * hiddenCats.length
+
+        Math.random() * unplacedCats.length
+
       )
+
     ];
 
   const board = cloneBoard();
 
   const cell =
+
     board[randomCat.row][randomCat.col];
 
-    playSound("hint");
+  playSound("hint");
 
   revealCorrect(cell);
-
-  const nextFound =
-    foundCats + 1;
-
-  setFoundCats(nextFound);
 
   setHints(
 
@@ -619,7 +644,30 @@ function useHint() {
 
   setPlayerBoard(board);
 
-  checkWin(nextFound);
+  // Recalculate found cats from board state
+  let nextFound = 0;
+
+  board.forEach((r) =>
+
+    r.forEach((c) => {
+
+      if (c.state === CELL_STATE.REVEALED) {
+
+        nextFound++;
+
+      }
+
+    })
+
+  );
+
+  setFoundCats(nextFound);
+
+  if (nextFound === puzzle.cats.length) {
+
+    setCompleted(true);
+
+  }
 
 }
 

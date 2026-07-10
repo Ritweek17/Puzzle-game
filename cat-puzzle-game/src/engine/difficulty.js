@@ -10,10 +10,8 @@
 
 const LEVEL_RANGES = [
   { min: 1, max: 10, difficulty: "Very Easy", grid: 4 },
-  { min: 11, max: 25, difficulty: "Easy", grid: 5 },
-  { min: 26, max: 50, difficulty: "Medium", grid: 6 },
-  { min: 51, max: 100, difficulty: "Hard", grid: 7 },
-  { min: 101, max: Infinity, difficulty: "Expert", grid: 8 },
+  { min: 11, max: 30, difficulty: "Easy", grid: 5 },
+  { min: 31, max: Infinity, difficulty: "Medium/Hard", grid: 6 },
 ];
 
 export function getPuzzleConfig(level) {

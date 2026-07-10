@@ -172,9 +172,26 @@ export function generateCats(
 }
 
 export function hasAlternativeSolution(regions, baseCats, random) {
-  const grouped = groupCellsByRegion(regions);
+  const size = regions.length;
+  
+  // Fast group cells by region using direct array mapping
+  const grouped = Array.from({ length: size }, () => []);
+  for (let r = 0; r < size; r++) {
+    const rowReg = regions[r];
+    for (let c = 0; c < size; c++) {
+      const id = rowReg[c];
+      grouped[id - 1].push({ row: r, col: c });
+    }
+  }
+  grouped.sort((a, b) => a.length - b.length);
+
   const baseCatsSet = new Set(baseCats.map(c => `${c.row},${c.col}`));
   
+  // Constraints lookup tables
+  const rowsUsed = new Uint8Array(size);
+  const colsUsed = new Uint8Array(size);
+  const grid = Array.from({ length: size }, () => new Uint8Array(size));
+
   let foundAlternative = false;
 
   function solveAlt(index, cats) {
@@ -198,11 +215,42 @@ export function hasAlternativeSolution(regions, baseCats, random) {
     for (const cell of cells) {
       if (foundAlternative) break;
 
-      if (canPlace(cats, cell.row, cell.col)) {
-        cats.push(cell);
-        solveAlt(index + 1, cats);
-        cats.pop();
+      const r = cell.row;
+      const c = cell.col;
+
+      // O(1) constraints check
+      if (rowsUsed[r] || colsUsed[c]) continue;
+      
+      // Check 8 neighbors
+      let adjOk = true;
+      if (r > 0) {
+        if (grid[r-1][c]) adjOk = false;
+        else if (c > 0 && grid[r-1][c-1]) adjOk = false;
+        else if (c < size - 1 && grid[r-1][c+1]) adjOk = false;
       }
+      if (adjOk && r < size - 1) {
+        if (grid[r+1][c]) adjOk = false;
+        else if (c > 0 && grid[r+1][c-1]) adjOk = false;
+        else if (c < size - 1 && grid[r+1][c+1]) adjOk = false;
+      }
+      if (adjOk && c > 0 && grid[r][c-1]) adjOk = false;
+      if (adjOk && c < size - 1 && grid[r][c+1]) adjOk = false;
+
+      if (!adjOk) continue;
+
+      // Place cat
+      rowsUsed[r] = 1;
+      colsUsed[c] = 1;
+      grid[r][c] = 1;
+      cats.push(cell);
+
+      solveAlt(index + 1, cats);
+
+      // Backtrack
+      cats.pop();
+      grid[r][c] = 0;
+      colsUsed[c] = 0;
+      rowsUsed[r] = 0;
     }
   }
 

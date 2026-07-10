@@ -326,6 +326,10 @@ export async function deleteCloudProgress(uid) {
       stars: deleteField(),
       achievementsProgress: deleteField()
     });
+
+    // Also delete publicProfile for the leaderboard
+    const publicRef = doc(db, "publicProfiles", uid);
+    await deleteDoc(publicRef);
   } catch (error) {
     console.error("[progressSync] deleteCloudProgress failed:", error);
   }

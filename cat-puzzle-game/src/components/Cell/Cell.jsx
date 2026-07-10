@@ -10,6 +10,7 @@
  * ----------------------------------------------------
  */
 
+import { memo } from "react";
 import { motion } from "framer-motion";
 
 import { CELL_STATE } from "../../constants/gameConstants";
@@ -170,4 +171,4 @@ function Cell({
 
 }
 
-export default Cell;
+export default memo(Cell);

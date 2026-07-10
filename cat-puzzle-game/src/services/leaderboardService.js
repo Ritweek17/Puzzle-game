@@ -1,9 +1,9 @@
 import { db } from "../firebase/firestore";
-import { collection, query, where, onSnapshot, setDoc, doc, serverTimestamp, getDocs } from "firebase/firestore";
+import { collection, query, where, onSnapshot, setDoc, doc, getDoc, serverTimestamp, getDocs } from "firebase/firestore";
 import { getProgress } from "../utils/progress";
 
 /**
- * Updates the current user's profile and stats in the users collection.
+ * Updates the current user's profile and stats in the users and publicProfiles collections.
  * Called automatically after a successful progress sync.
  */
 export async function updateLeaderboardProfile(firebaseUser) {
@@ -14,8 +14,18 @@ export async function updateLeaderboardProfile(firebaseUser) {
   const totalStars = Object.values(progress.stars || {}).reduce((acc, val) => acc + val, 0);
 
   const docRef = doc(db, "users", firebaseUser.uid);
+  const publicRef = doc(db, "publicProfiles", firebaseUser.uid);
   
   try {
+    let profile = {};
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      profile = snap.data().profile || {};
+    }
+
+    const currentLevel = progress.currentLevel || 1;
+
+    // 1. Write to users/{uid} (private document)
     await setDoc(docRef, {
       uid: firebaseUser.uid,
       displayName: firebaseUser.displayName || "Unknown Explorer",
@@ -23,10 +33,28 @@ export async function updateLeaderboardProfile(firebaseUser) {
       email: firebaseUser.email || null,
       completedLevels,
       totalStars,
-      currentLevel: progress.currentLevel || 1,
+      currentLevel,
       lastUpdated: serverTimestamp(),
       guest: false
     }, { merge: true });
+
+    // 2. Write to publicProfiles/{uid} (public document)
+    await setDoc(publicRef, {
+      uid: firebaseUser.uid,
+      displayName: profile.username || firebaseUser.displayName || "Unknown Explorer",
+      photoURL: profile.avatar || firebaseUser.photoURL || null,
+      completedLevels,
+      totalStars,
+      currentLevel,
+      profile: {
+        username: profile.username || firebaseUser.displayName || "Unknown Explorer",
+        avatar: profile.avatar || firebaseUser.photoURL || null,
+        selectedAvatar: profile.selectedAvatar || "orange"
+      },
+      lastUpdated: serverTimestamp(),
+      guest: false
+    }, { merge: true });
+
   } catch (error) {
     console.error("[leaderboardService] updateLeaderboardProfile failed:", error);
   }
@@ -38,7 +66,7 @@ export async function updateLeaderboardProfile(firebaseUser) {
  * Ranking rules: completedLevels DESC, totalStars DESC, lastUpdated ASC.
  */
 export function subscribeToLeaderboard(onUpdate, onError) {
-  const q = query(collection(db, "users"), where("guest", "==", false));
+  const q = query(collection(db, "publicProfiles"), where("guest", "==", false));
   
   return onSnapshot(q, (snapshot) => {
     const players = [];
@@ -70,7 +98,7 @@ export function subscribeToLeaderboard(onUpdate, onError) {
  * Manually fetches the leaderboard once.
  */
 export async function fetchLeaderboard() {
-  const q = query(collection(db, "users"), where("guest", "==", false));
+  const q = query(collection(db, "publicProfiles"), where("guest", "==", false));
   const snapshot = await getDocs(q);
   const players = [];
   snapshot.forEach(doc => {
